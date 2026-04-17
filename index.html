@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quizix — Enter the Arena</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .screen-join, .screen-lobby-player, .screen-question, .screen-result, .screen-final { overflow-y: auto; }
+    .my-score-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: rgba(3,3,10,0.9); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .my-score-label { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.2em; color: var(--text-secondary); }
+    .my-score-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,245,255,0.4); }
+    .screen-question { padding-top: 70px; }
+    /* Profile Step */
+    .profile-step { display: none; }
+    .profile-step.active { display: flex; flex-direction: column; }
+    .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border-subtle); transition: all 0.3s; }
+    .step-dot.active { background: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,245,255,0.6); }
+    .step-dot.done { background: rgba(0,245,255,0.4); }
+  </style>
+</head>
+<body>
+
+<!-- JOIN SCREEN -->
+<div class="screen active" id="screen-join">
+  <div style="text-align:center; margin-bottom:40px;" class="fade-up">
+    <div class="logo">Quiz<span>ix</span></div>
+    <div class="tagline">Enter the Digital Arena</div>
+  </div>
+  <div class="panel fade-up-2">
+
+    <!-- STEP DOTS -->
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot-0"></div>
+      <div class="step-dot" id="dot-1"></div>
+      <div class="step-dot" id="dot-2"></div>
+    </div>
+
+    <!-- STEP 1: PIN + NAME -->
+    <div class="profile-step active" id="step-0">
+      <div class="section-title">Player Login</div>
+      <div class="section-sub">Join a Game</div>
+      <div class="input-group">
+        <div class="input-label">Game PIN</div>
+        <input type="text" class="pin-input" id="input-pin" maxlength="6" placeholder="••••••" autocomplete="off" inputmode="numeric" />
+      </div>
+      <div class="input-group">
+        <div class="input-label">Your Callsign</div>
+        <input type="text" id="input-name" maxlength="20" placeholder="Enter callsign..." autocomplete="off" />
+      </div>
+      <button class="btn btn-primary" id="btn-next-step" style="margin-top:8px;">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 12h14"/></svg>
+        Next: Build Profile
+      </button>
+      <div class="divider"></div>
+      <div style="text-align:center;">
+        <a href="host.html" style="color:var(--text-secondary); font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.15em; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          HOST A GAME
+        </a>
+      </div>
+    </div>
+
+    <!-- STEP 2: AVATAR -->
+    <div class="profile-step" id="step-1">
+      <div class="section-title">Profile Maker</div>
+      <div class="section-sub">Choose Your Avatar</div>
+      <div style="display:flex; justify-content:center; margin-bottom:20px;">
+        <div class="profile-preview" id="profile-preview" style="background: rgba(0,245,255,0.1);">
+          <span id="avatar-display">👾</span>
+        </div>
+      </div>
+      <div class="input-label" style="margin-bottom:8px;">Avatar</div>
+      <div class="avatar-picker" id="avatar-picker">
+        <!-- Filled by JS -->
+      </div>
+      <div class="input-label" style="margin-bottom:8px; margin-top:4px;">Colour</div>
+      <div class="color-picker" id="color-picker">
+        <!-- Filled by JS -->
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-secondary" id="btn-back-0" style="flex:1;">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
+          Back
+        </button>
+        <button class="btn btn-primary" id="btn-join" style="flex:2; width:auto;">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Launch Into Arena
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LOBBY WAITING (player side) -->
+<div class="screen" id="screen-lobby-player">
+  <div class="waiting-pulse">
+    <svg width="36" height="36" fill="none" viewBox="0 0 24 24" style="color:var(--neon-cyan);">
+      <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+      <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+  </div>
+  <div style="text-align:center; margin-bottom:32px;" class="fade-up">
+    <div class="section-title">Lobby</div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <div class="profile-preview" id="lobby-avatar-preview" style="width:64px; height:64px; font-size:1.8rem; margin:0 0 8px;">👾</div>
+      <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--text-primary);" id="player-welcome-name">Player</div>
+    </div>
+    <div style="font-family:var(--font-body); color:var(--text-secondary); margin-top:6px; font-size:1rem;">You've entered the arena. Await the host.</div>
+  </div>
+  <div class="stat-row fade-up-2">
+    <div class="stat-badge">
+      <div class="s-val" id="lobby-player-count">0</div>
+      <div class="s-label">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="display:inline; vertical-align:middle; margin-right:3px;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Players Ready
+      </div>
+    </div>
+    <div class="stat-badge">
+      <div class="s-val" id="lobby-q-count">0</div>
+      <div class="s-label">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="display:inline; vertical-align:middle; margin-right:3px;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Questions
+      </div>
+    </div>
+  </div>
+  <div style="font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.25em; color:var(--text-muted);">GAME PIN: <span id="lobby-room-pin" style="color:var(--neon-cyan)"></span></div>
+</div>
+
+<!-- QUESTION SCREEN -->
+<div class="screen" id="screen-question">
+  <div class="my-score-bar" id="player-score-bar">
+    <div>
+      <div class="my-score-label">SCORE</div>
+      <div class="my-score-val" id="my-score-display">0</div>
+    </div>
+    <div class="answered-badge" id="answered-badge" style="display:none;">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      LOCKED IN
+    </div>
+    <div style="font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.1em; color:var(--text-secondary);" id="hud-qnum">Q1</div>
+  </div>
+
+  <div class="question-number" id="q-number-label">Question 1 of 10</div>
+
+  <div class="timer-wrap">
+    <div class="timer-ring" id="timer-ring">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle class="ring-bg" cx="40" cy="40" r="35"/>
+        <circle class="ring-progress" id="ring-progress" cx="40" cy="40" r="35"/>
+      </svg>
+      <div class="timer-number" id="timer-display">20</div>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+  </div>
+
+  <div class="question-text" id="question-text">Loading question...</div>
+
+  <div class="answer-grid" id="answer-grid">
+    <button class="answer-btn" data-choice="0">
+      <div class="answer-label">A</div>
+      <span class="answer-text"></span>
+    </button>
+    <button class="answer-btn" data-choice="1">
+      <div class="answer-label">B</div>
+      <span class="answer-text"></span>
+    </button>
+    <button class="answer-btn" data-choice="2">
+      <div class="answer-label">C</div>
+      <span class="answer-text"></span>
+    </button>
+    <button class="answer-btn" data-choice="3">
+      <div class="answer-label">D</div>
+      <span class="answer-text"></span>
+    </button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="screen" id="screen-result">
+  <div style="text-align:center;" class="fade-up">
+    <div id="result-icon" style="margin-bottom:16px; display:flex; justify-content:center;">
+      <!-- filled by JS SVG -->
+    </div>
+    <div id="result-title" style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--neon-cyan); text-shadow: 0 0 20px rgba(0,245,255,0.4); margin-bottom:8px;">Correct!</div>
+    <div id="result-pts" style="font-family:var(--font-display); font-size:1.1rem; color:var(--text-secondary);">+850 pts</div>
+  </div>
+  <div class="divider" style="max-width:300px; width:100%; margin:28px auto;"></div>
+  <div style="text-align:center;" class="fade-up-2">
+    <div style="font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.2em; color:var(--text-secondary); margin-bottom:6px;">TOTAL SCORE</div>
+    <div id="result-total" style="font-family:var(--font-display); font-size:3rem; font-weight:900; color:var(--text-primary);">0</div>
+  </div>
+  <div style="margin-top:24px; font-family:var(--font-body); font-size:1rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; justify-content:center;" class="fade-up-3">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="animation:spin 1.4s linear infinite;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    Next question loading...
+  </div>
+</div>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+
+<!-- LEADERBOARD SCREEN -->
+<div class="screen" id="screen-leaderboard">
+  <div style="text-align:center; margin-bottom:28px;" class="fade-up">
+    <div class="section-title">Leaderboard</div>
+    <div class="section-sub" style="margin-bottom:0">Current Standings</div>
+  </div>
+  <div class="leaderboard" id="player-leaderboard"></div>
+</div>
+
+<!-- FINAL SCREEN -->
+<div class="screen" id="screen-final">
+  <div style="text-align:center;" class="fade-up">
+    <div class="logo" style="font-size:2rem; margin-bottom:8px;">Quiz<span>ix</span></div>
+    <div class="section-title" style="margin-bottom:24px;">Game Over</div>
+    <div style="display:flex; justify-content:center; margin-bottom:16px;" id="final-icon"></div>
+    <div id="final-rank-msg" style="font-family:var(--font-display); font-size:1rem; font-weight:600; color:var(--neon-cyan); text-shadow:0 0 15px rgba(0,245,255,0.4); letter-spacing:0.1em; margin-bottom:24px;">You placed #1!</div>
+  </div>
+  <div class="stat-row fade-up-2">
+    <div class="stat-badge"><div class="s-val" id="final-score">0</div><div class="s-label">Final Score</div></div>
+    <div class="stat-badge"><div class="s-val" id="final-correct">0</div><div class="s-label">Correct</div></div>
+    <div class="stat-badge"><div class="s-val" id="final-rank">—</div><div class="s-label">Rank</div></div>
+  </div>
+  <div class="leaderboard fade-up-3" id="final-leaderboard" style="max-width:400px;"></div>
+  <button class="btn btn-secondary" id="btn-play-again" style="margin-top:28px; display:inline-flex; align-items:center; gap:8px;">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    Play Again
+  </button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDDngjiAp6x6gUEH7QC5frVlyaFRbCbMi4",
+  authDomain: "quizix-b8059.firebaseapp.com",
+  projectId: "quizix-b8059",
+  storageBucket: "quizix-b8059.firebasestorage.app",
+  messagingSenderId: "383192909945",
+  appId: "1:383192909945:web:bcbc77e35a659c82fc6ca8",
+  databaseURL: "https://quizix-b8059-default-rtdb.firebaseio.com/"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ===== STATE =====
+let roomCode = null, playerId = null, playerName = null;
+let myScore = 0, correctCount = 0, hasAnswered = false;
+let timerInterval = null, currentAnswerIndex = null, unsubRoom = null, lastQuestionIndex = -1;
+let selectedAvatar = '👾', selectedColor = 'rgba(0,245,255,0.15)', selectedColorHex = '#00f5ff';
+
+const CIRCUMFERENCE = 2 * Math.PI * 35;
+
+// ===== PROFILE MAKER =====
+const AVATARS = ['👾','🤖','🦊','🐉','⚡','🔥','💀','🎯','🦁','🚀','🌙','⭐','🎮','🧠','🦋'];
+const COLORS = [
+  { bg: 'rgba(0,245,255,0.15)', hex: '#00f5ff', label: 'Cyan' },
+  { bg: 'rgba(191,0,255,0.15)', hex: '#bf00ff', label: 'Purple' },
+  { bg: 'rgba(255,0,110,0.15)', hex: '#ff006e', label: 'Pink' },
+  { bg: 'rgba(57,255,20,0.15)', hex: '#39ff14', label: 'Green' },
+  { bg: 'rgba(255,109,0,0.15)', hex: '#ff6d00', label: 'Orange' },
+  { bg: 'rgba(255,230,0,0.15)', hex: '#ffe600', label: 'Yellow' },
+  { bg: 'rgba(255,255,255,0.1)', hex: '#ffffff', label: 'White' },
+];
+
+const avatarPicker = document.getElementById('avatar-picker');
+const colorPicker = document.getElementById('color-picker');
+
+AVATARS.forEach((a, i) => {
+  const el = document.createElement('div');
+  el.className = 'avatar-option' + (i === 0 ? ' selected' : '');
+  el.textContent = a;
+  el.style.fontSize = '1.4rem';
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.avatar-option').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedAvatar = a;
+    updatePreview();
+  });
+  avatarPicker.appendChild(el);
+});
+
+COLORS.forEach((c, i) => {
+  const el = document.createElement('div');
+  el.className = 'color-dot' + (i === 0 ? ' selected' : '');
+  el.style.background = c.hex;
+  el.title = c.label;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedColor = c.bg;
+    selectedColorHex = c.hex;
+    updatePreview();
+  });
+  colorPicker.appendChild(el);
+});
+
+function updatePreview() {
+  const prev = document.getElementById('profile-preview');
+  prev.style.background = selectedColor;
+  prev.style.borderColor = selectedColorHex;
+  prev.style.boxShadow = `0 0 20px ${selectedColorHex}44`;
+  document.getElementById('avatar-display').textContent = selectedAvatar;
+}
+
+// ===== STEP NAV =====
+let currentStep = 0;
+function goStep(n) {
+  document.getElementById(`step-${currentStep}`).classList.remove('active');
+  document.getElementById(`dot-${currentStep}`).classList.remove('active');
+  document.getElementById(`dot-${currentStep}`).classList.add('done');
+  currentStep = n;
+  document.getElementById(`step-${n}`).classList.add('active');
+  document.getElementById(`dot-${n}`).classList.add('active');
+  document.getElementById(`dot-${n}`).classList.remove('done');
+}
+
+document.getElementById('btn-next-step').addEventListener('click', () => {
+  const pin = document.getElementById('input-pin').value.trim();
+  const name = document.getElementById('input-name').value.trim();
+  if (!pin || pin.length < 4) { toast('Enter a valid game PIN', 'error'); return; }
+  if (!name) { toast('Enter your callsign', 'error'); return; }
+  goStep(1);
+});
+document.getElementById('btn-back-0').addEventListener('click', () => goStep(0));
+document.getElementById('input-pin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,6); });
+document.getElementById('input-pin').addEventListener('keydown', e => e.key === 'Enter' && document.getElementById('input-name').focus());
+document.getElementById('input-name').addEventListener('keydown', e => e.key === 'Enter' && document.getElementById('btn-next-step').click());
+
+// ===== UTILS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ===== SVG ICONS =====
+const SVG_CORRECT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#39ff14" stroke-width="1.5" fill="rgba(57,255,20,0.1)"/><path stroke="#39ff14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.5 3.5L17 9" filter="drop-shadow(0 0 6px #39ff14)"/></svg>`;
+const SVG_WRONG = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff006e" stroke-width="1.5" fill="rgba(255,0,110,0.1)"/><path stroke="#ff006e" stroke-width="2.5" stroke-linecap="round" d="M9 9l6 6M15 9l-6 6" filter="drop-shadow(0 0 6px #ff006e)"/></svg>`;
+const SVG_TIMEOUT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.1)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3"/><circle cx="12" cy="12" r="1" fill="#ff6d00"/></svg>`;
+
+// Trophy SVGs for final rank
+function trophySVG(rank) {
+  if (rank === 1) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(255,230,0,0.1)"/></svg>`;
+  if (rank === 2) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#c0c0d0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(192,192,208,0.08)"/></svg>`;
+  if (rank === 3) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#cd8040" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(205,128,64,0.08)"/></svg>`;
+  return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+}
+
+// Medal SVGs for LB
+const MEDAL_SVG = [
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#ffe600" stroke-width="1.5" fill="rgba(255,230,0,0.15)"/><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#c0c0d0" stroke-width="1.5" fill="rgba(192,192,208,0.1)"/><path stroke="#c0c0d0" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
+  `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#cd8040" stroke-width="1.5" fill="rgba(205,128,64,0.1)"/><path stroke="#cd8040" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
+];
+
+// ===== JOIN =====
+document.getElementById('btn-join').addEventListener('click', joinGame);
+
+async function joinGame() {
+  const pin = document.getElementById('input-pin').value.trim();
+  const name = document.getElementById('input-name').value.trim();
+
+  const roomSnap = await get(ref(db, `rooms/${pin}`));
+  if (!roomSnap.exists()) { toast('Room not found. Check the PIN.', 'error'); goStep(0); return; }
+  const room = roomSnap.val();
+  if (room.status === 'final') { toast('This game has ended.', 'error'); return; }
+
+  const players = room.players || {};
+  if (Object.values(players).some(p => p.name.toLowerCase() === name.toLowerCase())) {
+    toast('That name is taken. Choose another.', 'error'); goStep(0); return;
+  }
+
+  roomCode = pin; playerName = name;
+  playerId = 'p_' + Math.random().toString(36).slice(2, 10);
+
+  await set(ref(db, `rooms/${roomCode}/players/${playerId}`), {
+    name: playerName, score: 0, answers: {}, joinedAt: Date.now(),
+    avatar: selectedAvatar, color: selectedColor, colorHex: selectedColorHex
+  });
+
+  document.getElementById('player-welcome-name').textContent = playerName;
+  document.getElementById('lobby-room-pin').textContent = roomCode;
+
+  // Set lobby avatar
+  const lobbyPrev = document.getElementById('lobby-avatar-preview');
+  lobbyPrev.style.background = selectedColor;
+  lobbyPrev.style.borderColor = selectedColorHex;
+  lobbyPrev.style.boxShadow = `0 0 20px ${selectedColorHex}44`;
+  lobbyPrev.innerHTML = `<span style="font-size:1.8rem">${selectedAvatar}</span>`;
+
+  showScreen('screen-lobby-player');
+  startRoomListener();
+}
+
+// ===== ROOM LISTENER =====
+function startRoomListener() {
+  if (unsubRoom) unsubRoom();
+  unsubRoom = onValue(ref(db, `rooms/${roomCode}`), snap => {
+    if (!snap.exists()) return;
+    const room = snap.val();
+    const players = room.players || {};
+    document.getElementById('lobby-player-count').textContent = Object.keys(players).length;
+    if (room.quiz) document.getElementById('lobby-q-count').textContent = room.quiz.questions?.length || 0;
+
+    if (room.status === 'question') {
+      const qi = room.currentQuestion || 0;
+      if (qi !== lastQuestionIndex) {
+        lastQuestionIndex = qi; hasAnswered = false; currentAnswerIndex = null;
+        clearTimer(); showQuestion(room, qi);
+      }
+    } else if (room.status === 'leaderboard') {
+      showLeaderboard(players);
+    } else if (room.status === 'final') {
+      showFinal(players, room);
+    }
+
+    if (players[playerId]) {
+      myScore = players[playerId].score || 0;
+      document.getElementById('my-score-display').textContent = myScore.toLocaleString();
+    }
+  });
+}
+
+// ===== SHOW QUESTION =====
+function showQuestion(room, qi) {
+  const q = room.quiz.questions[qi];
+  if (!q) return;
+  document.getElementById('question-text').textContent = q.question;
+  document.getElementById('q-number-label').textContent = `Question ${qi+1} of ${room.quiz.questions.length}`;
+  document.getElementById('hud-qnum').textContent = `Q${qi+1}`;
+  document.getElementById('answered-badge').style.display = 'none';
+  document.getElementById('progress-bar').style.width = (qi / room.quiz.questions.length * 100) + '%';
+  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+    btn.querySelector('.answer-text').textContent = q.choices[i] || '';
+    btn.className = 'answer-btn'; btn.disabled = false;
+  });
+  showScreen('screen-question');
+  startTimer(q.timeLimit || 20, room.questionStartTime, qi);
+}
+
+// ===== TIMER =====
+function startTimer(totalSecs, startTime, qi) {
+  clearTimer();
+  const ring = document.getElementById('timer-ring');
+  const progress = document.getElementById('ring-progress');
+  const display = document.getElementById('timer-display');
+  progress.style.strokeDasharray = CIRCUMFERENCE;
+  const tick = () => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    const remaining = Math.max(0, totalSecs - elapsed);
+    const frac = remaining / totalSecs;
+    display.textContent = Math.ceil(remaining);
+    progress.style.strokeDashoffset = CIRCUMFERENCE * (1 - frac);
+    ring.className = 'timer-ring';
+    if (remaining <= 5) ring.classList.add('danger');
+    else if (remaining <= 10) ring.classList.add('warning');
+    if (remaining <= 0) { clearTimer(); if (!hasAnswered) revealAnswer(qi, -1); }
+  };
+  tick(); timerInterval = setInterval(tick, 200);
+}
+function clearTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+// ===== ANSWER SELECTION =====
+document.querySelectorAll('.answer-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (hasAnswered) return;
+    const qi = lastQuestionIndex;
+    const choice = parseInt(btn.dataset.choice);
+    hasAnswered = true; currentAnswerIndex = choice;
+    document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+    btn.classList.add('selected');
+    document.getElementById('answered-badge').style.display = 'flex';
+
+    const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+    const room = roomSnap.val();
+    const elapsed = (Date.now() - room.questionStartTime) / 1000;
+    const timeLimit = room.quiz.questions[qi].timeLimit || 20;
+    const correctIdx = room.quiz.questions[qi].correct;
+    const isCorrect = choice === correctIdx;
+    let pts = 0;
+    if (isCorrect) { const speedBonus = Math.max(0, 1 - elapsed / timeLimit); pts = Math.round(500 + 500 * speedBonus); correctCount++; }
+
+    await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { [`answers/${qi}`]: { choice, pts, time: elapsed } });
+    if (isCorrect) await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: myScore + pts });
+    revealAnswer(qi, choice, isCorrect, pts);
+  });
+});
+
+function revealAnswer(qi, selectedChoice, isCorrect, pts = 0) {
+  get(ref(db, `rooms/${roomCode}/quiz/questions/${qi}`)).then(snap => {
+    if (!snap.exists()) return;
+    const q = snap.val();
+    const correctIdx = q.correct;
+    document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === correctIdx) btn.classList.add('correct');
+      else if (i === selectedChoice && selectedChoice !== correctIdx) btn.classList.add('wrong');
+    });
+    clearTimer();
+    setTimeout(() => {
+      document.getElementById('result-icon').innerHTML = isCorrect ? SVG_CORRECT : (selectedChoice === -1 ? SVG_TIMEOUT : SVG_WRONG);
+      document.getElementById('result-title').textContent = isCorrect ? 'Correct!' : (selectedChoice === -1 ? "Time's Up!" : 'Wrong!');
+      document.getElementById('result-title').style.color = isCorrect ? 'var(--neon-green)' : (selectedChoice === -1 ? 'var(--neon-orange)' : 'var(--neon-pink)');
+      document.getElementById('result-title').style.textShadow = isCorrect ? '0 0 20px rgba(57,255,20,0.5)' : '0 0 20px rgba(255,0,110,0.5)';
+      document.getElementById('result-pts').textContent = pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
+      get(ref(db, `rooms/${roomCode}/players/${playerId}`)).then(s => {
+        document.getElementById('result-total').textContent = (s.exists() ? (s.val().score || 0) : myScore).toLocaleString();
+      });
+      showScreen('screen-result');
+    }, 1500);
+  });
+}
+
+// ===== LEADERBOARD =====
+function showLeaderboard(players) {
+  const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+  const container = document.getElementById('player-leaderboard');
+  container.innerHTML = '';
+  sorted.slice(0, 10).forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'lb-item';
+    el.style.animationDelay = (i * 0.06) + 's';
+    const isMine = p.name === playerName;
+    if (isMine) el.style.borderColor = 'rgba(0,245,255,0.35)';
+    const rankHTML = i < 3 ? MEDAL_SVG[i] : `<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
+    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color || 'rgba(0,245,255,0.1)'}; font-size:1rem;">${p.avatar}</div>` : '';
+    el.innerHTML = `<div class="lb-rank" style="display:flex;align-items:center;">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${isMine ? ' <span style="color:var(--neon-cyan);font-size:0.7rem;">(you)</span>' : ''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
+    container.appendChild(el);
+  });
+  showScreen('screen-leaderboard');
+}
+
+// ===== FINAL =====
+function showFinal(players, room) {
+  const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+  const myIdx = sorted.findIndex(p => p.name === playerName);
+  const myRank = myIdx + 1;
+  document.getElementById('final-icon').innerHTML = trophySVG(myRank);
+  document.getElementById('final-rank-msg').textContent = `You placed #${myRank} of ${sorted.length}!`;
+  const me = sorted[myIdx] || {};
+  document.getElementById('final-score').textContent = (me.score||0).toLocaleString();
+  document.getElementById('final-correct').textContent = correctCount;
+  document.getElementById('final-rank').textContent = '#' + myRank;
+  const lb = document.getElementById('final-leaderboard');
+  lb.innerHTML = '';
+  sorted.slice(0, 5).forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'lb-item';
+    el.style.animationDelay = (i * 0.08) + 's';
+    const isMine = p.name === playerName;
+    if (isMine) el.style.borderColor = 'rgba(0,245,255,0.35)';
+    const rankHTML = i < 3 ? MEDAL_SVG[i] : `<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
+    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color || 'rgba(0,245,255,0.1)'}; font-size:1rem;">${p.avatar}</div>` : '';
+    el.innerHTML = `<div class="lb-rank">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${isMine ? ' <span style="color:var(--neon-cyan);font-size:0.7rem;">(you)</span>' : ''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
+    lb.appendChild(el);
+  });
+  showScreen('screen-final');
+}
+
+document.getElementById('btn-play-again').addEventListener('click', () => window.location.reload());
+</script>
+</body>
+</html>
