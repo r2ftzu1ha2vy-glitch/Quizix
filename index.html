@@ -17,30 +17,79 @@
     .my-score-label { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.2em; color: var(--text-secondary); }
     .my-score-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,245,255,0.4); }
     .screen-question { padding-top: 70px; }
-    /* Profile Step */
     .profile-step { display: none; }
     .profile-step.active { display: flex; flex-direction: column; }
     .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
     .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border-subtle); transition: all 0.3s; }
     .step-dot.active { background: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,245,255,0.6); }
     .step-dot.done { background: rgba(0,245,255,0.4); }
+
+    /* Question image */
+    .q-image-wrap { width: 100%; max-width: 600px; margin: 0 auto 20px; }
+    .q-image-wrap img { width: 100%; max-height: 220px; object-fit: contain; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: var(--bg-card); }
+
+    /* Multi-answer */
+    .multi-hint { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.15em; color: var(--neon-green); text-align: center; margin-bottom: 12px; display: none; }
+    .multi-submit-wrap { display: flex; justify-content: center; margin-top: 16px; display: none; }
+    .answer-btn.multi-selected { outline: 3px solid var(--neon-green); outline-offset: 2px; }
+
+    /* Slide/info screen */
+    .slide-info-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 20px; }
+    .slide-info-title { font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 0.25em; color: var(--neon-purple); }
+    .slide-continue-btn { margin-top: 10px; }
+
+    /* Poll notice */
+    .poll-hint { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.15em; color: var(--neon-orange); text-align: center; margin-bottom: 12px; display: none; }
+
+    /* Legal */
+    .legal-modal {
+      position: fixed; inset: 0; z-index: 600;
+      background: rgba(3,3,10,0.92); backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .legal-modal.open { opacity: 1; pointer-events: all; }
+    .legal-box {
+      background: var(--bg-panel); border: 1px solid var(--border-glow);
+      border-radius: var(--radius-xl); padding: 40px;
+      max-width: 600px; width: 92%; max-height: 80vh;
+      overflow-y: auto; box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+      position: relative;
+    }
+    .legal-box h2 { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.2em; color: var(--neon-cyan); margin-bottom: 6px; }
+    .legal-box p, .legal-box li { font-family: var(--font-body); font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 10px; }
+    .legal-box ul { padding-left: 18px; margin-bottom: 12px; }
+    .legal-box .legal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; }
+    .legal-box .legal-close:hover { border-color: rgba(255,0,110,0.4); color: var(--neon-pink); }
+
+    .cookie-banner {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+      background: var(--bg-panel); border-top: 1px solid var(--border-glow);
+      padding: 18px 28px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+      backdrop-filter: blur(16px); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .cookie-banner.visible { transform: translateY(0); }
+    .cookie-text { flex: 1; font-family: var(--font-body); font-size: 0.9rem; color: var(--text-secondary); min-width: 200px; }
+    .cookie-text a { color: var(--neon-cyan); cursor: pointer; text-decoration: none; }
+    .legal-footer { text-align: center; font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.15em; color: var(--text-muted); margin-top: 16px; }
+    .legal-footer a { color: var(--text-muted); text-decoration: none; margin: 0 8px; cursor: pointer; transition: color 0.2s; }
+    .legal-footer a:hover { color: var(--neon-cyan); }
+    .logo-img { height: 38px; width: auto; object-fit: contain; display: block; margin: 0 auto 8px; }
   </style>
 </head>
 <body>
 
 <!-- JOIN SCREEN -->
 <div class="screen active" id="screen-join">
-  <div style="text-align:center; margin-bottom:40px;" class="fade-up">
-    <div class="logo">Quiz<span>ix</span></div>
+  <div style="text-align:center;margin-bottom:40px;" class="fade-up">
+    <img src="https://iili.io/BU5hHLQ.png" alt="Quizix" class="logo-img" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block';" />
+    <div class="logo" id="logo-fallback" style="display:none;">Quiz<span>ix</span></div>
     <div class="tagline">Enter the Digital Arena</div>
   </div>
   <div class="panel fade-up-2">
-
-    <!-- STEP DOTS -->
     <div class="step-indicator">
       <div class="step-dot active" id="dot-0"></div>
       <div class="step-dot" id="dot-1"></div>
-      <div class="step-dot" id="dot-2"></div>
     </div>
 
     <!-- STEP 1: PIN + NAME -->
@@ -61,10 +110,15 @@
       </button>
       <div class="divider"></div>
       <div style="text-align:center;">
-        <a href="host.html" style="color:var(--text-secondary); font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.15em; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+        <a href="host.html" style="color:var(--text-secondary);font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.15em;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
           HOST A GAME
         </a>
+      </div>
+      <div class="legal-footer" style="margin-top:12px;">
+        <a onclick="openLegal('terms')">TERMS</a>
+        <a onclick="openLegal('privacy')">PRIVACY</a>
+        <a onclick="openLegal('cookies')">COOKIES</a>
       </div>
     </div>
 
@@ -72,35 +126,30 @@
     <div class="profile-step" id="step-1">
       <div class="section-title">Profile Maker</div>
       <div class="section-sub">Choose Your Avatar</div>
-      <div style="display:flex; justify-content:center; margin-bottom:20px;">
-        <div class="profile-preview" id="profile-preview" style="background: rgba(0,245,255,0.1);">
+      <div style="display:flex;justify-content:center;margin-bottom:20px;">
+        <div class="profile-preview" id="profile-preview" style="background:rgba(0,245,255,0.1);">
           <span id="avatar-display">👾</span>
         </div>
       </div>
       <div class="input-label" style="margin-bottom:8px;">Avatar</div>
-      <div class="avatar-picker" id="avatar-picker">
-        <!-- Filled by JS -->
-      </div>
-      <div class="input-label" style="margin-bottom:8px; margin-top:4px;">Colour</div>
-      <div class="color-picker" id="color-picker">
-        <!-- Filled by JS -->
-      </div>
-      <div style="display:flex; gap:10px; margin-top:16px;">
+      <div class="avatar-picker" id="avatar-picker"></div>
+      <div class="input-label" style="margin-bottom:8px;margin-top:4px;">Colour</div>
+      <div class="color-picker" id="color-picker"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
         <button class="btn btn-secondary" id="btn-back-0" style="flex:1;">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
           Back
         </button>
-        <button class="btn btn-primary" id="btn-join" style="flex:2; width:auto;">
+        <button class="btn btn-primary" id="btn-join" style="flex:2;width:auto;">
           <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           Launch Into Arena
         </button>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- LOBBY WAITING (player side) -->
+<!-- LOBBY WAITING -->
 <div class="screen" id="screen-lobby-player">
   <div class="waiting-pulse">
     <svg width="36" height="36" fill="none" viewBox="0 0 24 24" style="color:var(--neon-cyan);">
@@ -108,31 +157,25 @@
       <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
     </svg>
   </div>
-  <div style="text-align:center; margin-bottom:32px;" class="fade-up">
+  <div style="text-align:center;margin-bottom:32px;" class="fade-up">
     <div class="section-title">Lobby</div>
-    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-      <div class="profile-preview" id="lobby-avatar-preview" style="width:64px; height:64px; font-size:1.8rem; margin:0 0 8px;">👾</div>
-      <div style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--text-primary);" id="player-welcome-name">Player</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+      <div class="profile-preview" id="lobby-avatar-preview" style="width:64px;height:64px;font-size:1.8rem;margin:0 0 8px;">👾</div>
+      <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--text-primary);" id="player-welcome-name">Player</div>
     </div>
-    <div style="font-family:var(--font-body); color:var(--text-secondary); margin-top:6px; font-size:1rem;">You've entered the arena. Await the host.</div>
+    <div style="font-family:var(--font-body);color:var(--text-secondary);margin-top:6px;font-size:1rem;">You've entered the arena. Await the host.</div>
   </div>
   <div class="stat-row fade-up-2">
     <div class="stat-badge">
       <div class="s-val" id="lobby-player-count">0</div>
-      <div class="s-label">
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="display:inline; vertical-align:middle; margin-right:3px;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-        Players Ready
-      </div>
+      <div class="s-label">Players Ready</div>
     </div>
     <div class="stat-badge">
       <div class="s-val" id="lobby-q-count">0</div>
-      <div class="s-label">
-        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="display:inline; vertical-align:middle; margin-right:3px;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        Questions
-      </div>
+      <div class="s-label">Questions</div>
     </div>
   </div>
-  <div style="font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.25em; color:var(--text-muted);">GAME PIN: <span id="lobby-room-pin" style="color:var(--neon-cyan)"></span></div>
+  <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.25em;color:var(--text-muted);">GAME PIN: <span id="lobby-room-pin" style="color:var(--neon-cyan);"></span></div>
 </div>
 
 <!-- QUESTION SCREEN -->
@@ -146,12 +189,13 @@
       <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       LOCKED IN
     </div>
-    <div style="font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.1em; color:var(--text-secondary);" id="hud-qnum">Q1</div>
+    <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;color:var(--text-secondary);" id="hud-qnum">Q1</div>
   </div>
 
   <div class="question-number" id="q-number-label">Question 1 of 10</div>
 
-  <div class="timer-wrap">
+  <!-- Timer (hidden for slides) -->
+  <div class="timer-wrap" id="timer-wrap-el">
     <div class="timer-ring" id="timer-ring">
       <svg width="80" height="80" viewBox="0 0 80 80">
         <circle class="ring-bg" cx="40" cy="40" r="35"/>
@@ -165,54 +209,65 @@
     <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
   </div>
 
+  <!-- Question image -->
+  <div class="q-image-wrap" id="q-image-wrap" style="display:none;">
+    <img id="q-image" src="" alt="Question image" />
+  </div>
+
   <div class="question-text" id="question-text">Loading question...</div>
 
+  <!-- Mode hints -->
+  <div class="multi-hint" id="multi-hint">☑ SELECT ALL CORRECT ANSWERS — THEN SUBMIT</div>
+  <div class="poll-hint" id="poll-hint">📊 POLL — YOUR OPINION MATTERS</div>
+
   <div class="answer-grid" id="answer-grid">
-    <button class="answer-btn" data-choice="0">
-      <div class="answer-label">A</div>
-      <span class="answer-text"></span>
+    <button class="answer-btn" data-choice="0"><div class="answer-label">A</div><span class="answer-text"></span></button>
+    <button class="answer-btn" data-choice="1"><div class="answer-label">B</div><span class="answer-text"></span></button>
+    <button class="answer-btn" data-choice="2"><div class="answer-label">C</div><span class="answer-text"></span></button>
+    <button class="answer-btn" data-choice="3"><div class="answer-label">D</div><span class="answer-text"></span></button>
+  </div>
+
+  <!-- Multi-answer submit -->
+  <div class="multi-submit-wrap" id="multi-submit-wrap">
+    <button class="btn btn-primary" id="btn-multi-submit" style="width:auto;padding:14px 40px;">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      Submit Answers
     </button>
-    <button class="answer-btn" data-choice="1">
-      <div class="answer-label">B</div>
-      <span class="answer-text"></span>
-    </button>
-    <button class="answer-btn" data-choice="2">
-      <div class="answer-label">C</div>
-      <span class="answer-text"></span>
-    </button>
-    <button class="answer-btn" data-choice="3">
-      <div class="answer-label">D</div>
-      <span class="answer-text"></span>
-    </button>
+  </div>
+
+  <!-- Info slide continue button -->
+  <div id="slide-continue-wrap" style="display:none;justify-content:center;margin-top:24px;">
+    <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.2em;color:var(--text-muted);text-align:center;">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="animation:spin 1.4s linear infinite;display:inline;vertical-align:middle;margin-right:4px;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      WAITING FOR HOST...
+    </div>
   </div>
 </div>
 
 <!-- RESULT SCREEN -->
 <div class="screen" id="screen-result">
   <div style="text-align:center;" class="fade-up">
-    <div id="result-icon" style="margin-bottom:16px; display:flex; justify-content:center;">
-      <!-- filled by JS SVG -->
-    </div>
-    <div id="result-title" style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--neon-cyan); text-shadow: 0 0 20px rgba(0,245,255,0.4); margin-bottom:8px;">Correct!</div>
-    <div id="result-pts" style="font-family:var(--font-display); font-size:1.1rem; color:var(--text-secondary);">+850 pts</div>
+    <div id="result-icon" style="margin-bottom:16px;display:flex;justify-content:center;"></div>
+    <div id="result-title" style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--neon-cyan);text-shadow:0 0 20px rgba(0,245,255,0.4);margin-bottom:8px;">Correct!</div>
+    <div id="result-pts" style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-secondary);">+850 pts</div>
   </div>
-  <div class="divider" style="max-width:300px; width:100%; margin:28px auto;"></div>
+  <div class="divider" style="max-width:300px;width:100%;margin:28px auto;"></div>
   <div style="text-align:center;" class="fade-up-2">
-    <div style="font-family:var(--font-display); font-size:0.65rem; letter-spacing:0.2em; color:var(--text-secondary); margin-bottom:6px;">TOTAL SCORE</div>
-    <div id="result-total" style="font-family:var(--font-display); font-size:3rem; font-weight:900; color:var(--text-primary);">0</div>
+    <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.2em;color:var(--text-secondary);margin-bottom:6px;">TOTAL SCORE</div>
+    <div id="result-total" style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:var(--text-primary);">0</div>
   </div>
-  <div style="margin-top:24px; font-family:var(--font-body); font-size:1rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; justify-content:center;" class="fade-up-3">
+  <div style="margin-top:24px;font-family:var(--font-body);font-size:1rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;justify-content:center;" class="fade-up-3">
     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="animation:spin 1.4s linear infinite;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-    Next question loading...
+    Waiting for leaderboard...
   </div>
 </div>
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
 <!-- LEADERBOARD SCREEN -->
 <div class="screen" id="screen-leaderboard">
-  <div style="text-align:center; margin-bottom:28px;" class="fade-up">
+  <div style="text-align:center;margin-bottom:28px;" class="fade-up">
     <div class="section-title">Leaderboard</div>
-    <div class="section-sub" style="margin-bottom:0">Current Standings</div>
+    <div class="section-sub" style="margin-bottom:0;">Current Standings</div>
   </div>
   <div class="leaderboard" id="player-leaderboard"></div>
 </div>
@@ -220,10 +275,10 @@
 <!-- FINAL SCREEN -->
 <div class="screen" id="screen-final">
   <div style="text-align:center;" class="fade-up">
-    <div class="logo" style="font-size:2rem; margin-bottom:8px;">Quiz<span>ix</span></div>
+    <img src="https://iili.io/BU5hHLQ.png" alt="Quizix" class="logo-img" onerror="this.style.display='none';" />
     <div class="section-title" style="margin-bottom:24px;">Game Over</div>
-    <div style="display:flex; justify-content:center; margin-bottom:16px;" id="final-icon"></div>
-    <div id="final-rank-msg" style="font-family:var(--font-display); font-size:1rem; font-weight:600; color:var(--neon-cyan); text-shadow:0 0 15px rgba(0,245,255,0.4); letter-spacing:0.1em; margin-bottom:24px;">You placed #1!</div>
+    <div style="display:flex;justify-content:center;margin-bottom:16px;" id="final-icon"></div>
+    <div id="final-rank-msg" style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--neon-cyan);text-shadow:0 0 15px rgba(0,245,255,0.4);letter-spacing:0.1em;margin-bottom:24px;">You placed #1!</div>
   </div>
   <div class="stat-row fade-up-2">
     <div class="stat-badge"><div class="s-val" id="final-score">0</div><div class="s-label">Final Score</div></div>
@@ -231,13 +286,33 @@
     <div class="stat-badge"><div class="s-val" id="final-rank">—</div><div class="s-label">Rank</div></div>
   </div>
   <div class="leaderboard fade-up-3" id="final-leaderboard" style="max-width:400px;"></div>
-  <button class="btn btn-secondary" id="btn-play-again" style="margin-top:28px; display:inline-flex; align-items:center; gap:8px;">
+  <button class="btn btn-secondary" id="btn-play-again" style="margin-top:28px;display:inline-flex;align-items:center;gap:8px;">
     <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
     Play Again
   </button>
 </div>
 
-<!-- TOAST -->
+<!-- LEGAL MODAL -->
+<div class="legal-modal" id="legal-modal">
+  <div class="legal-box">
+    <button class="legal-close" onclick="closeLegal()">✕</button>
+    <div id="legal-content"></div>
+  </div>
+</div>
+
+<!-- COOKIE BANNER -->
+<div class="cookie-banner" id="cookie-banner">
+  <div class="cookie-text">
+    🍪 We use cookies to keep your session running smoothly. See our
+    <a onclick="openLegal('cookies')">Cookie Policy</a> and
+    <a onclick="openLegal('privacy')">Privacy Policy</a>.
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-secondary" style="padding:10px 18px;font-size:0.65rem;" onclick="openLegal('cookies')">Learn More</button>
+    <button class="btn btn-primary" style="padding:10px 20px;font-size:0.65rem;width:auto;" onclick="acceptCookies()">Accept</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -261,57 +336,93 @@ let roomCode = null, playerId = null, playerName = null;
 let myScore = 0, correctCount = 0, hasAnswered = false;
 let timerInterval = null, currentAnswerIndex = null, unsubRoom = null, lastQuestionIndex = -1;
 let selectedAvatar = '👾', selectedColor = 'rgba(0,245,255,0.15)', selectedColorHex = '#00f5ff';
+let multiSelected = new Set();
+let currentQType = 'mc';
 
 const CIRCUMFERENCE = 2 * Math.PI * 35;
+
+// ===== COOKIE / LEGAL =====
+window.acceptCookies = function() {
+  localStorage.setItem('qx_cookies', '1');
+  document.getElementById('cookie-banner').classList.remove('visible');
+};
+if (!localStorage.getItem('qx_cookies')) {
+  setTimeout(() => document.getElementById('cookie-banner').classList.add('visible'), 1200);
+}
+const LEGAL = {
+  terms: `<h2>TERMS OF SERVICE</h2>
+    <p>Last updated: April 2026. Welcome to Quizix. By using this platform, you agree to these terms.</p>
+    <ul>
+      <li>Quizix is provided for educational and entertainment purposes.</li>
+      <li>You must not use Quizix to host harmful, hateful, or inappropriate content.</li>
+      <li>Game rooms are temporary and data may be cleared after sessions end.</li>
+      <li>We reserve the right to terminate access for misuse.</li>
+      <li>Quizix is not liable for loss of data or quiz results.</li>
+    </ul>`,
+  privacy: `<h2>PRIVACY POLICY</h2>
+    <p>Last updated: April 2026.</p>
+    <ul>
+      <li><strong>Data collected:</strong> Callsigns, scores, and answers during game sessions only.</li>
+      <li><strong>Storage:</strong> Temporary in Firebase; removed after game ends.</li>
+      <li><strong>No accounts:</strong> No email or account required.</li>
+      <li><strong>Third parties:</strong> Google Firebase for real-time infrastructure.</li>
+      <li><strong>Children:</strong> Suitable for all ages; no personal data of minors knowingly collected.</li>
+    </ul>`,
+  cookies: `<h2>COOKIE POLICY</h2>
+    <p>Last updated: April 2026.</p>
+    <ul>
+      <li><strong>Session cookies:</strong> Maintain your game session.</li>
+      <li><strong>Preference cookies:</strong> Remember cookie acceptance.</li>
+      <li><strong>Firebase cookies:</strong> For database connection management.</li>
+    </ul>
+    <p>No advertising or tracking cookies. You can clear cookies via browser settings.</p>`
+};
+window.openLegal = function(type) {
+  document.getElementById('legal-content').innerHTML = LEGAL[type];
+  document.getElementById('legal-modal').classList.add('open');
+};
+window.closeLegal = function() { document.getElementById('legal-modal').classList.remove('open'); };
+document.getElementById('legal-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('legal-modal')) closeLegal();
+});
 
 // ===== PROFILE MAKER =====
 const AVATARS = ['👾','🤖','🦊','🐉','⚡','🔥','💀','🎯','🦁','🚀','🌙','⭐','🎮','🧠','🦋'];
 const COLORS = [
-  { bg: 'rgba(0,245,255,0.15)', hex: '#00f5ff', label: 'Cyan' },
-  { bg: 'rgba(191,0,255,0.15)', hex: '#bf00ff', label: 'Purple' },
-  { bg: 'rgba(255,0,110,0.15)', hex: '#ff006e', label: 'Pink' },
-  { bg: 'rgba(57,255,20,0.15)', hex: '#39ff14', label: 'Green' },
-  { bg: 'rgba(255,109,0,0.15)', hex: '#ff6d00', label: 'Orange' },
-  { bg: 'rgba(255,230,0,0.15)', hex: '#ffe600', label: 'Yellow' },
-  { bg: 'rgba(255,255,255,0.1)', hex: '#ffffff', label: 'White' },
+  { bg: 'rgba(0,245,255,0.15)', hex: '#00f5ff' },
+  { bg: 'rgba(191,0,255,0.15)', hex: '#bf00ff' },
+  { bg: 'rgba(255,0,110,0.15)', hex: '#ff006e' },
+  { bg: 'rgba(57,255,20,0.15)', hex: '#39ff14' },
+  { bg: 'rgba(255,109,0,0.15)', hex: '#ff6d00' },
+  { bg: 'rgba(255,230,0,0.15)', hex: '#ffe600' },
+  { bg: 'rgba(255,255,255,0.1)', hex: '#ffffff' },
 ];
 
 const avatarPicker = document.getElementById('avatar-picker');
 const colorPicker = document.getElementById('color-picker');
-
 AVATARS.forEach((a, i) => {
   const el = document.createElement('div');
   el.className = 'avatar-option' + (i === 0 ? ' selected' : '');
-  el.textContent = a;
-  el.style.fontSize = '1.4rem';
+  el.textContent = a; el.style.fontSize = '1.4rem';
   el.addEventListener('click', () => {
     document.querySelectorAll('.avatar-option').forEach(x => x.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedAvatar = a;
-    updatePreview();
+    el.classList.add('selected'); selectedAvatar = a; updatePreview();
   });
   avatarPicker.appendChild(el);
 });
-
 COLORS.forEach((c, i) => {
   const el = document.createElement('div');
   el.className = 'color-dot' + (i === 0 ? ' selected' : '');
   el.style.background = c.hex;
-  el.title = c.label;
   el.addEventListener('click', () => {
     document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedColor = c.bg;
-    selectedColorHex = c.hex;
-    updatePreview();
+    el.classList.add('selected'); selectedColor = c.bg; selectedColorHex = c.hex; updatePreview();
   });
   colorPicker.appendChild(el);
 });
-
 function updatePreview() {
   const prev = document.getElementById('profile-preview');
-  prev.style.background = selectedColor;
-  prev.style.borderColor = selectedColorHex;
+  prev.style.background = selectedColor; prev.style.borderColor = selectedColorHex;
   prev.style.boxShadow = `0 0 20px ${selectedColorHex}44`;
   document.getElementById('avatar-display').textContent = selectedAvatar;
 }
@@ -327,7 +438,6 @@ function goStep(n) {
   document.getElementById(`dot-${n}`).classList.add('active');
   document.getElementById(`dot-${n}`).classList.remove('done');
 }
-
 document.getElementById('btn-next-step').addEventListener('click', () => {
   const pin = document.getElementById('input-pin').value.trim();
   const name = document.getElementById('input-name').value.trim();
@@ -354,9 +464,9 @@ function toast(msg, type='') {
 // ===== SVG ICONS =====
 const SVG_CORRECT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#39ff14" stroke-width="1.5" fill="rgba(57,255,20,0.1)"/><path stroke="#39ff14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.5 3.5L17 9" filter="drop-shadow(0 0 6px #39ff14)"/></svg>`;
 const SVG_WRONG = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff006e" stroke-width="1.5" fill="rgba(255,0,110,0.1)"/><path stroke="#ff006e" stroke-width="2.5" stroke-linecap="round" d="M9 9l6 6M15 9l-6 6" filter="drop-shadow(0 0 6px #ff006e)"/></svg>`;
-const SVG_TIMEOUT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.1)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3"/><circle cx="12" cy="12" r="1" fill="#ff6d00"/></svg>`;
+const SVG_TIMEOUT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.1)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3"/></svg>`;
+const SVG_POLL = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.08)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6m6 0h6m-6 0H3m6 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0h4a2 2 0 002-2v-3a2 2 0 00-2-2h-4"/></svg>`;
 
-// Trophy SVGs for final rank
 function trophySVG(rank) {
   if (rank === 1) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(255,230,0,0.1)"/></svg>`;
   if (rank === 2) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#c0c0d0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(192,192,208,0.08)"/></svg>`;
@@ -364,7 +474,6 @@ function trophySVG(rank) {
   return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
 }
 
-// Medal SVGs for LB
 const MEDAL_SVG = [
   `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#ffe600" stroke-width="1.5" fill="rgba(255,230,0,0.15)"/><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
   `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#c0c0d0" stroke-width="1.5" fill="rgba(192,192,208,0.1)"/><path stroke="#c0c0d0" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
@@ -377,35 +486,26 @@ document.getElementById('btn-join').addEventListener('click', joinGame);
 async function joinGame() {
   const pin = document.getElementById('input-pin').value.trim();
   const name = document.getElementById('input-name').value.trim();
-
   const roomSnap = await get(ref(db, `rooms/${pin}`));
   if (!roomSnap.exists()) { toast('Room not found. Check the PIN.', 'error'); goStep(0); return; }
   const room = roomSnap.val();
   if (room.status === 'final') { toast('This game has ended.', 'error'); return; }
-
   const players = room.players || {};
   if (Object.values(players).some(p => p.name.toLowerCase() === name.toLowerCase())) {
     toast('That name is taken. Choose another.', 'error'); goStep(0); return;
   }
-
   roomCode = pin; playerName = name;
   playerId = 'p_' + Math.random().toString(36).slice(2, 10);
-
   await set(ref(db, `rooms/${roomCode}/players/${playerId}`), {
     name: playerName, score: 0, answers: {}, joinedAt: Date.now(),
     avatar: selectedAvatar, color: selectedColor, colorHex: selectedColorHex
   });
-
   document.getElementById('player-welcome-name').textContent = playerName;
   document.getElementById('lobby-room-pin').textContent = roomCode;
-
-  // Set lobby avatar
   const lobbyPrev = document.getElementById('lobby-avatar-preview');
-  lobbyPrev.style.background = selectedColor;
-  lobbyPrev.style.borderColor = selectedColorHex;
+  lobbyPrev.style.background = selectedColor; lobbyPrev.style.borderColor = selectedColorHex;
   lobbyPrev.style.boxShadow = `0 0 20px ${selectedColorHex}44`;
   lobbyPrev.innerHTML = `<span style="font-size:1.8rem">${selectedAvatar}</span>`;
-
   showScreen('screen-lobby-player');
   startRoomListener();
 }
@@ -423,7 +523,7 @@ function startRoomListener() {
     if (room.status === 'question') {
       const qi = room.currentQuestion || 0;
       if (qi !== lastQuestionIndex) {
-        lastQuestionIndex = qi; hasAnswered = false; currentAnswerIndex = null;
+        lastQuestionIndex = qi; hasAnswered = false; currentAnswerIndex = null; multiSelected = new Set();
         clearTimer(); showQuestion(room, qi);
       }
     } else if (room.status === 'leaderboard') {
@@ -443,17 +543,43 @@ function startRoomListener() {
 function showQuestion(room, qi) {
   const q = room.quiz.questions[qi];
   if (!q) return;
+  currentQType = q.qtype || 'mc';
+
   document.getElementById('question-text').textContent = q.question;
   document.getElementById('q-number-label').textContent = `Question ${qi+1} of ${room.quiz.questions.length}`;
   document.getElementById('hud-qnum').textContent = `Q${qi+1}`;
   document.getElementById('answered-badge').style.display = 'none';
   document.getElementById('progress-bar').style.width = (qi / room.quiz.questions.length * 100) + '%';
-  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
-    btn.querySelector('.answer-text').textContent = q.choices[i] || '';
-    btn.className = 'answer-btn'; btn.disabled = false;
-  });
+
+  // Image
+  const imgWrap = document.getElementById('q-image-wrap');
+  const imgEl = document.getElementById('q-image');
+  if (q.image) { imgEl.src = q.image; imgWrap.style.display = 'block'; }
+  else { imgWrap.style.display = 'none'; imgEl.src = ''; }
+
+  // Mode hints
+  document.getElementById('multi-hint').style.display = currentQType === 'multi' ? 'block' : 'none';
+  document.getElementById('poll-hint').style.display = currentQType === 'poll' ? 'block' : 'none';
+  document.getElementById('multi-submit-wrap').style.display = currentQType === 'multi' ? 'flex' : 'none';
+
+  // Timer visibility
+  const timerWrap = document.getElementById('timer-wrap-el');
+  timerWrap.style.display = currentQType === 'slide' ? 'none' : 'flex';
+
+  // Info slide
+  document.getElementById('slide-continue-wrap').style.display = currentQType === 'slide' ? 'flex' : 'none';
+  document.getElementById('answer-grid').style.display = currentQType === 'slide' ? 'none' : 'grid';
+
+  // Choices
+  if (currentQType !== 'slide') {
+    document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+      btn.querySelector('.answer-text').textContent = q.choices[i] || '';
+      btn.className = 'answer-btn'; btn.disabled = false;
+    });
+  }
+
   showScreen('screen-question');
-  startTimer(q.timeLimit || 20, room.questionStartTime, qi);
+  if (currentQType !== 'slide') startTimer(q.timeLimit || 20, room.questionStartTime, qi);
 }
 
 // ===== TIMER =====
@@ -484,25 +610,86 @@ document.querySelectorAll('.answer-btn').forEach(btn => {
     if (hasAnswered) return;
     const qi = lastQuestionIndex;
     const choice = parseInt(btn.dataset.choice);
+
+    if (currentQType === 'multi') {
+      // Toggle selection
+      if (multiSelected.has(choice)) {
+        multiSelected.delete(choice);
+        btn.classList.remove('multi-selected');
+      } else {
+        multiSelected.add(choice);
+        btn.classList.add('multi-selected');
+      }
+      return;
+    }
+
+    // Single answer (mc or poll)
     hasAnswered = true; currentAnswerIndex = choice;
     document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
     btn.classList.add('selected');
     document.getElementById('answered-badge').style.display = 'flex';
-
-    const roomSnap = await get(ref(db, `rooms/${roomCode}`));
-    const room = roomSnap.val();
-    const elapsed = (Date.now() - room.questionStartTime) / 1000;
-    const timeLimit = room.quiz.questions[qi].timeLimit || 20;
-    const correctIdx = room.quiz.questions[qi].correct;
-    const isCorrect = choice === correctIdx;
-    let pts = 0;
-    if (isCorrect) { const speedBonus = Math.max(0, 1 - elapsed / timeLimit); pts = Math.round(500 + 500 * speedBonus); correctCount++; }
-
-    await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { [`answers/${qi}`]: { choice, pts, time: elapsed } });
-    if (isCorrect) await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: myScore + pts });
-    revealAnswer(qi, choice, isCorrect, pts);
+    await submitSingleAnswer(qi, choice);
   });
 });
+
+// Multi-answer submit
+document.getElementById('btn-multi-submit').addEventListener('click', async () => {
+  if (hasAnswered || multiSelected.size === 0) {
+    if (multiSelected.size === 0) toast('Select at least one answer', 'error');
+    return;
+  }
+  hasAnswered = true;
+  document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+  document.getElementById('answered-badge').style.display = 'flex';
+  document.getElementById('btn-multi-submit').disabled = true;
+  const qi = lastQuestionIndex;
+
+  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+  const room = roomSnap.val();
+  const elapsed = (Date.now() - room.questionStartTime) / 1000;
+  const timeLimit = room.quiz.questions[qi].timeLimit || 20;
+  const correctArr = room.quiz.questions[qi].correct || [];
+  const selectedArr = [...multiSelected];
+
+  const isCorrect = correctArr.length === selectedArr.length &&
+    correctArr.every(c => selectedArr.includes(c)) &&
+    selectedArr.every(c => correctArr.includes(c));
+
+  let pts = 0;
+  if (isCorrect) { const speedBonus = Math.max(0, 1 - elapsed / timeLimit); pts = Math.round(500 + 500 * speedBonus); correctCount++; }
+
+  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { [`answers/${qi}`]: { choice: selectedArr, pts, time: elapsed } });
+  if (isCorrect) await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: myScore + pts });
+  revealMultiAnswer(qi, correctArr, isCorrect, pts);
+});
+
+async function submitSingleAnswer(qi, choice) {
+  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+  const room = roomSnap.val();
+  const elapsed = (Date.now() - room.questionStartTime) / 1000;
+  const timeLimit = room.quiz.questions[qi].timeLimit || 20;
+  const q = room.quiz.questions[qi];
+  const qtype = q.qtype || 'mc';
+
+  let pts = 0, isCorrect = false;
+  if (qtype === 'poll') {
+    // Everyone gets points for participating in a poll
+    pts = 100; isCorrect = true;
+  } else {
+    const correctIdx = q.correct;
+    isCorrect = choice === correctIdx;
+    if (isCorrect) { const speedBonus = Math.max(0, 1 - elapsed / timeLimit); pts = Math.round(500 + 500 * speedBonus); correctCount++; }
+  }
+
+  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { [`answers/${qi}`]: { choice, pts, time: elapsed } });
+  if (pts > 0) await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: myScore + pts });
+
+  if (qtype === 'poll') {
+    revealPollAnswer(qi, choice, pts);
+  } else {
+    revealAnswer(qi, choice, isCorrect, pts);
+  }
+}
 
 function revealAnswer(qi, selectedChoice, isCorrect, pts = 0) {
   get(ref(db, `rooms/${roomCode}/quiz/questions/${qi}`)).then(snap => {
@@ -515,18 +702,50 @@ function revealAnswer(qi, selectedChoice, isCorrect, pts = 0) {
       else if (i === selectedChoice && selectedChoice !== correctIdx) btn.classList.add('wrong');
     });
     clearTimer();
-    setTimeout(() => {
-      document.getElementById('result-icon').innerHTML = isCorrect ? SVG_CORRECT : (selectedChoice === -1 ? SVG_TIMEOUT : SVG_WRONG);
-      document.getElementById('result-title').textContent = isCorrect ? 'Correct!' : (selectedChoice === -1 ? "Time's Up!" : 'Wrong!');
-      document.getElementById('result-title').style.color = isCorrect ? 'var(--neon-green)' : (selectedChoice === -1 ? 'var(--neon-orange)' : 'var(--neon-pink)');
-      document.getElementById('result-title').style.textShadow = isCorrect ? '0 0 20px rgba(57,255,20,0.5)' : '0 0 20px rgba(255,0,110,0.5)';
-      document.getElementById('result-pts').textContent = pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
-      get(ref(db, `rooms/${roomCode}/players/${playerId}`)).then(s => {
-        document.getElementById('result-total').textContent = (s.exists() ? (s.val().score || 0) : myScore).toLocaleString();
-      });
-      showScreen('screen-result');
-    }, 1500);
+    setTimeout(() => showResultScreen(isCorrect, selectedChoice, pts), 1400);
   });
+}
+
+function revealMultiAnswer(qi, correctArr, isCorrect, pts) {
+  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
+    btn.disabled = true; btn.classList.remove('multi-selected');
+    if (correctArr.includes(i)) btn.classList.add('correct');
+    else if (multiSelected.has(i)) btn.classList.add('wrong');
+  });
+  clearTimer();
+  setTimeout(() => showResultScreen(isCorrect, null, pts, 'multi'), 1400);
+}
+
+function revealPollAnswer(qi, choice, pts) {
+  document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+  clearTimer();
+  setTimeout(() => showResultScreen(true, choice, pts, 'poll'), 1400);
+}
+
+function showResultScreen(isCorrect, selectedChoice, pts, mode = 'mc') {
+  let icon, title, titleColor, titleShadow;
+  if (mode === 'poll') {
+    icon = SVG_POLL; title = 'Vote Counted!';
+    titleColor = 'var(--neon-orange)'; titleShadow = '0 0 20px rgba(255,109,0,0.5)';
+  } else if (isCorrect) {
+    icon = SVG_CORRECT; title = 'Correct!';
+    titleColor = 'var(--neon-green)'; titleShadow = '0 0 20px rgba(57,255,20,0.5)';
+  } else if (selectedChoice === -1) {
+    icon = SVG_TIMEOUT; title = "Time's Up!";
+    titleColor = 'var(--neon-orange)'; titleShadow = '0 0 20px rgba(255,109,0,0.5)';
+  } else {
+    icon = SVG_WRONG; title = mode === 'multi' ? 'Not Quite!' : 'Wrong!';
+    titleColor = 'var(--neon-pink)'; titleShadow = '0 0 20px rgba(255,0,110,0.5)';
+  }
+  document.getElementById('result-icon').innerHTML = icon;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-title').style.color = titleColor;
+  document.getElementById('result-title').style.textShadow = titleShadow;
+  document.getElementById('result-pts').textContent = pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
+  get(ref(db, `rooms/${roomCode}/players/${playerId}`)).then(s => {
+    document.getElementById('result-total').textContent = (s.exists() ? (s.val().score || 0) : myScore).toLocaleString();
+  });
+  showScreen('screen-result');
 }
 
 // ===== LEADERBOARD =====
@@ -536,12 +755,11 @@ function showLeaderboard(players) {
   container.innerHTML = '';
   sorted.slice(0, 10).forEach((p, i) => {
     const el = document.createElement('div');
-    el.className = 'lb-item';
-    el.style.animationDelay = (i * 0.06) + 's';
+    el.className = 'lb-item'; el.style.animationDelay = (i * 0.06) + 's';
     const isMine = p.name === playerName;
     if (isMine) el.style.borderColor = 'rgba(0,245,255,0.35)';
     const rankHTML = i < 3 ? MEDAL_SVG[i] : `<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
-    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color || 'rgba(0,245,255,0.1)'}; font-size:1rem;">${p.avatar}</div>` : '';
+    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color||'rgba(0,245,255,0.1)'};font-size:1rem;">${p.avatar}</div>` : '';
     el.innerHTML = `<div class="lb-rank" style="display:flex;align-items:center;">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${isMine ? ' <span style="color:var(--neon-cyan);font-size:0.7rem;">(you)</span>' : ''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
     container.appendChild(el);
   });
@@ -559,16 +777,13 @@ function showFinal(players, room) {
   document.getElementById('final-score').textContent = (me.score||0).toLocaleString();
   document.getElementById('final-correct').textContent = correctCount;
   document.getElementById('final-rank').textContent = '#' + myRank;
-  const lb = document.getElementById('final-leaderboard');
-  lb.innerHTML = '';
+  const lb = document.getElementById('final-leaderboard'); lb.innerHTML = '';
   sorted.slice(0, 5).forEach((p, i) => {
-    const el = document.createElement('div');
-    el.className = 'lb-item';
-    el.style.animationDelay = (i * 0.08) + 's';
+    const el = document.createElement('div'); el.className = 'lb-item'; el.style.animationDelay = (i * 0.08) + 's';
     const isMine = p.name === playerName;
     if (isMine) el.style.borderColor = 'rgba(0,245,255,0.35)';
     const rankHTML = i < 3 ? MEDAL_SVG[i] : `<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
-    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color || 'rgba(0,245,255,0.1)'}; font-size:1rem;">${p.avatar}</div>` : '';
+    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color||'rgba(0,245,255,0.1)'};font-size:1rem;">${p.avatar}</div>` : '';
     el.innerHTML = `<div class="lb-rank">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${isMine ? ' <span style="color:var(--neon-cyan);font-size:0.7rem;">(you)</span>' : ''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
     lb.appendChild(el);
   });
