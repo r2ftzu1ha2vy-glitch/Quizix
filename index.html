@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quizix — Enter the Arena</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .screen-join, .screen-lobby-player, .screen-question, .screen-result, .screen-final { overflow-y: auto; }
+    .screen-join, .screen-lobby-player, .screen-question, .screen-result, .screen-final, .screen-leaderboard { overflow-y: auto; }
+
+    /* ===== SCORE BAR ===== */
     .my-score-bar {
       position: fixed; top: 0; left: 0; right: 0; z-index: 50;
       background: rgba(3,3,10,0.9); backdrop-filter: blur(10px);
@@ -14,60 +16,207 @@
       padding: 10px 20px;
       display: flex; align-items: center; justify-content: space-between;
     }
+    [data-theme="light"] .my-score-bar { background: rgba(240,242,255,0.92); }
     .my-score-label { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.2em; color: var(--text-secondary); }
-    .my-score-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,245,255,0.4); }
+    .my-score-val { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--neon-cyan); }
     .screen-question { padding-top: 70px; }
+
+    /* ===== TOP BAR RIGHT ===== */
+    .top-bar-right {
+      position: fixed; top: 16px; right: 16px; z-index: 300;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .brain-bits-badge {
+      background: var(--bg-panel);
+      border: 1px solid rgba(255,230,0,0.3);
+      border-radius: 20px;
+      padding: 6px 14px;
+      display: flex; align-items: center; gap: 6px;
+      cursor: default;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--neon-yellow);
+      transition: all 0.2s;
+      box-shadow: 0 2px 12px rgba(255,230,0,0.08);
+      user-select: none;
+    }
+    .brain-bits-badge:hover { border-color: var(--neon-yellow); box-shadow: 0 0 16px rgba(255,230,0,0.2); }
+    .brain-bits-tooltip {
+      position: fixed; top: 52px; right: 16px; z-index: 301;
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255,230,0,0.3);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      opacity: 0; pointer-events: none;
+      transform: translateY(-4px);
+      transition: all 0.2s;
+    }
+    .brain-bits-badge:hover + .brain-bits-tooltip { opacity: 1; transform: translateY(0); }
+
+    /* Pro badge */
+    .pro-active-badge {
+      background: rgba(255,230,0,0.12);
+      border: 1px solid rgba(255,230,0,0.4);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-family: var(--font-display);
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      color: var(--neon-yellow);
+      display: none;
+      align-items: center;
+      gap: 5px;
+    }
+    .pro-active-badge.visible { display: flex; }
+
+    /* ===== HOME SCREEN ===== */
+    #screen-home { padding: 0; align-items: stretch; justify-content: stretch; min-height: 100vh; position: relative; }
+    #screen-home.active { display: flex; }
+    .home-layout { display: flex; width: 100%; min-height: 100vh; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 260px; min-width: 260px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-subtle);
+      display: flex; flex-direction: column;
+      padding: 28px 20px; gap: 8px;
+      position: relative; z-index: 10;
+    }
+    .sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle); }
+    .sidebar-logo-img { height: 32px; width: auto; }
+    .sidebar-logo-text { font-family: var(--font-display); font-size: 1.1rem; font-weight: 900; color: var(--neon-cyan); letter-spacing: 0.08em; }
+    .sidebar-logo-text span { color: var(--neon-purple); }
+    .sidebar-nav-label { font-family: var(--font-display); font-size: 0.55rem; letter-spacing: 0.25em; color: var(--text-muted); padding: 8px 12px 4px; margin-top: 8px; }
+    .sidebar-btn {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: var(--radius-md);
+      border: none; background: transparent; cursor: pointer;
+      font-family: var(--font-body); font-size: 0.95rem; font-weight: 600;
+      color: var(--text-secondary); text-align: left; width: 100%; transition: all 0.2s;
+    }
+    .sidebar-btn:hover { background: rgba(0,245,255,0.06); color: var(--text-primary); }
+    .sidebar-btn.active { background: rgba(0,245,255,0.1); color: var(--neon-cyan); border: 1px solid rgba(0,245,255,0.2); }
+    .sidebar-btn .sb-icon { display: flex; align-items: center; width: 24px; flex-shrink: 0; }
+    .sidebar-btn .sb-badge { margin-left: auto; font-family: var(--font-display); font-size: 0.55rem; letter-spacing: 0.1em; padding: 2px 7px; border-radius: 4px; background: rgba(0,245,255,0.1); color: var(--neon-cyan); }
+    .sidebar-spacer { flex: 1; }
+    .sidebar-version { font-family: var(--font-display); font-size: 0.55rem; letter-spacing: 0.15em; color: var(--text-muted); padding: 12px; text-align: center; }
+
+    /* ===== HOME MAIN ===== */
+    .home-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px 80px; position: relative; overflow-y: auto; }
+    .home-hero { text-align: center; margin-bottom: 48px; }
+    .home-hero-img { height: 60px; width: auto; margin: 0 auto 16px; display: block; }
+    .home-tagline { font-family: var(--font-body); font-size: 1rem; font-weight: 300; letter-spacing: 0.4em; color: var(--text-secondary); margin-bottom: 40px; }
+    .home-cta-card { width: 100%; max-width: 440px; background: var(--bg-panel); border: 1px solid var(--border-glow); border-radius: var(--radius-xl); padding: 36px 40px; position: relative; }
+    .home-cta-card::before { content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 1px; background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent); }
+    .home-stats { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+
+    /* ===== SIDEBAR PANELS ===== */
+    .sidebar-panel { display: none; flex-direction: column; gap: 20px; width: 100%; max-width: 520px; padding: 60px 40px 80px; overflow-y: auto; }
+    .sidebar-panel.panel-active { display: flex; }
+
+    /* ===== EDIT PROFILE PANEL ===== */
+    .profile-edit-avatar-wrap { display: flex; align-items: center; gap: 20px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); }
+    .profile-edit-avatar { width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--neon-cyan); display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; transition: all 0.3s; overflow: hidden; }
+    .profile-edit-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .profile-edit-info { flex: 1; }
+    .profile-edit-name { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .profile-edit-sub { font-family: var(--font-body); font-size: 0.85rem; color: var(--text-secondary); }
+    .pro-locked-section { background: var(--bg-card); border: 1px solid rgba(255,230,0,0.2); border-radius: var(--radius-lg); padding: 20px; }
+    .pro-locked-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .pro-lock-icon { display: flex; align-items: center; color: var(--neon-yellow); }
+    .pro-locked-title { font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 0.15em; color: var(--neon-yellow); }
+    .pro-img-upload-btn { width: 100%; padding: 20px; border: 2px dashed rgba(255,230,0,0.2); border-radius: var(--radius-md); background: transparent; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.2s; color: var(--text-muted); font-family: var(--font-body); font-size: 0.9rem; }
+    .pro-img-upload-btn:hover { border-color: rgba(255,230,0,0.4); background: rgba(255,230,0,0.03); color: var(--neon-yellow); }
+    .bb-earning-guide { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; }
+    .bb-earn-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+    .bb-earn-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .bb-earn-icon { display: flex; align-items: center; width: 28px; justify-content: center; flex-shrink: 0; }
+    .bb-earn-info { flex: 1; }
+    .bb-earn-title { font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+    .bb-earn-desc { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+    .bb-earn-reward { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; color: var(--neon-yellow); }
+
+    /* Pro upload preview */
+    .pro-upload-preview { display: none; flex-direction: column; align-items: center; gap: 12px; }
+    .pro-upload-preview.visible { display: flex; }
+    .pro-upload-img-wrap { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2px solid var(--neon-yellow); }
+    .pro-upload-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ===== CANCEL PRO ===== */
+    .pro-cancel-btn {
+      width: 100%; padding: 12px;
+      background: transparent;
+      border: 1px solid rgba(255,0,110,0.25);
+      border-radius: var(--radius-md);
+      font-family: var(--font-display); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
+      color: rgba(255,0,110,0.6); cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin-top: 10px;
+    }
+    .pro-cancel-btn:hover { border-color: var(--neon-pink); color: var(--neon-pink); background: rgba(255,0,110,0.04); }
+
+    /* ===== SAVED QUIZZES ===== */
+    .saved-quiz-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 18px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.2s; animation: slideIn 0.3s ease both; }
+    .saved-quiz-card:hover { border-color: var(--border-glow); transform: translateY(-1px); }
+    .sqc-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 10px; background: rgba(0,245,255,0.08); flex-shrink: 0; }
+    .sqc-info { flex: 1; min-width: 0; }
+    .sqc-title { font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-primary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sqc-meta { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-secondary); }
+    .sqc-arrow { color: var(--text-muted); display: flex; align-items: center; }
+    .no-saved-quizzes { text-align: center; padding: 40px 20px; }
+    .no-saved-icon { display: flex; justify-content: center; margin-bottom: 12px; color: var(--text-muted); }
+    .no-saved-text { font-family: var(--font-body); font-size: 1rem; color: var(--text-secondary); margin-bottom: 16px; }
+
+    /* ===== PRO POPUP ===== */
+    .pro-modal-overlay { position: fixed; inset: 0; z-index: 800; background: rgba(3,3,10,0.88); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    [data-theme="light"] .pro-modal-overlay { background: rgba(200,210,255,0.7); }
+    .pro-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .pro-modal-box { background: var(--bg-panel); border: 1px solid rgba(255,230,0,0.3); border-radius: var(--radius-xl); padding: 0; max-width: 400px; width: 92%; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(255,230,0,0.08); transform: scale(0.92); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
+    .pro-modal-overlay.open .pro-modal-box { transform: scale(1); }
+    .pro-modal-img-wrap { width: 100%; height: 160px; overflow: hidden; position: relative; background: linear-gradient(135deg, rgba(255,230,0,0.08), rgba(191,0,255,0.08)); display: flex; align-items: center; justify-content: center; }
+    .pro-modal-img { width: 100%; height: 100%; object-fit: cover; }
+    .pro-modal-body { padding: 28px 32px 32px; text-align: center; }
+    .pro-modal-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; color: var(--neon-yellow); margin-bottom: 8px; }
+    .pro-modal-sub { font-family: var(--font-body); font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+    .pro-modal-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; text-align: left; }
+    .pro-feature-row { display: flex; align-items: center; gap: 10px; font-family: var(--font-body); font-size: 0.88rem; color: var(--text-secondary); }
+    .pro-feature-row .pf-check { color: var(--neon-yellow); font-size: 1rem; display: flex; align-items: center; }
+    .pro-buy-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, rgba(255,230,0,0.15), rgba(255,109,0,0.1)); border: 1px solid var(--neon-yellow); border-radius: var(--radius-md); font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; color: var(--neon-yellow); cursor: pointer; box-shadow: 0 0 20px rgba(255,230,0,0.15); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .pro-buy-btn:hover { box-shadow: 0 0 30px rgba(255,230,0,0.3); transform: translateY(-1px); }
+    .pro-bb-balance { font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 12px; }
+    .pro-modal-close { position: absolute; top: 12px; right: 12px; background: rgba(3,3,10,0.7); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.2s; z-index: 2; }
+    .pro-modal-close:hover { border-color: rgba(255,0,110,0.4); color: var(--neon-pink); }
+
+    /* ===== PROFILE STEP ===== */
     .profile-step { display: none; }
     .profile-step.active { display: flex; flex-direction: column; }
     .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
     .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border-subtle); transition: all 0.3s; }
-    .step-dot.active { background: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,245,255,0.6); }
-    .step-dot.done { background: rgba(0,245,255,0.4); }
-
-    /* Question image */
+    .step-dot.active { background: var(--neon-cyan); box-shadow: 0 0 8px rgba(0,245,255,0.4); }
+    .step-dot.done { background: rgba(0,245,255,0.3); }
     .q-image-wrap { width: 100%; max-width: 600px; margin: 0 auto 20px; }
     .q-image-wrap img { width: 100%; max-height: 220px; object-fit: contain; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); background: var(--bg-card); }
-
-    /* Multi-answer */
     .multi-hint { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.15em; color: var(--neon-green); text-align: center; margin-bottom: 12px; display: none; }
-    .multi-submit-wrap { display: flex; justify-content: center; margin-top: 16px; display: none; }
+    .multi-submit-wrap { display: flex; justify-content: center; margin-top: 16px; }
     .answer-btn.multi-selected { outline: 3px solid var(--neon-green); outline-offset: 2px; }
-
-    /* Slide/info screen */
-    .slide-info-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 20px; }
-    .slide-info-title { font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 0.25em; color: var(--neon-purple); }
-    .slide-continue-btn { margin-top: 10px; }
-
-    /* Poll notice */
     .poll-hint { font-family: var(--font-display); font-size: 0.6rem; letter-spacing: 0.15em; color: var(--neon-orange); text-align: center; margin-bottom: 12px; display: none; }
 
-    /* Legal */
-    .legal-modal {
-      position: fixed; inset: 0; z-index: 600;
-      background: rgba(3,3,10,0.92); backdrop-filter: blur(16px);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s;
-    }
+    /* ===== LEGAL ===== */
+    .legal-modal { position: fixed; inset: 0; z-index: 600; background: rgba(3,3,10,0.88); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .legal-modal.open { opacity: 1; pointer-events: all; }
-    .legal-box {
-      background: var(--bg-panel); border: 1px solid var(--border-glow);
-      border-radius: var(--radius-xl); padding: 40px;
-      max-width: 600px; width: 92%; max-height: 80vh;
-      overflow-y: auto; box-shadow: 0 30px 80px rgba(0,0,0,0.7);
-      position: relative;
-    }
+    .legal-box { background: var(--bg-panel); border: 1px solid var(--border-glow); border-radius: var(--radius-xl); padding: 40px; max-width: 600px; width: 92%; max-height: 80vh; overflow-y: auto; position: relative; }
     .legal-box h2 { font-family: var(--font-display); font-size: 0.9rem; letter-spacing: 0.2em; color: var(--neon-cyan); margin-bottom: 6px; }
     .legal-box p, .legal-box li { font-family: var(--font-body); font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 10px; }
     .legal-box ul { padding-left: 18px; margin-bottom: 12px; }
-    .legal-box .legal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; }
-    .legal-box .legal-close:hover { border-color: rgba(255,0,110,0.4); color: var(--neon-pink); }
-
-    .cookie-banner {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
-      background: var(--bg-panel); border-top: 1px solid var(--border-glow);
-      padding: 18px 28px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-      backdrop-filter: blur(16px); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    }
+    .legal-box .legal-close { position: absolute; top: 16px; right: 16px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .cookie-banner { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: var(--bg-panel); border-top: 1px solid var(--border-glow); padding: 18px 28px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; backdrop-filter: blur(16px); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
     .cookie-banner.visible { transform: translateY(0); }
     .cookie-text { flex: 1; font-family: var(--font-body); font-size: 0.9rem; color: var(--text-secondary); min-width: 200px; }
     .cookie-text a { color: var(--neon-cyan); cursor: pointer; text-decoration: none; }
@@ -75,105 +224,476 @@
     .legal-footer a { color: var(--text-muted); text-decoration: none; margin: 0 8px; cursor: pointer; transition: color 0.2s; }
     .legal-footer a:hover { color: var(--neon-cyan); }
     .logo-img { height: 38px; width: auto; object-fit: contain; display: block; margin: 0 auto 8px; }
+
+    /* ===== HACK MODE ===== */
+    #matrix-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1s; }
+    #matrix-canvas.visible { opacity: 0.15; }
+    #scan-glitch { position: fixed; inset: 0; pointer-events: none; z-index: 1; background: repeating-linear-gradient(transparent, transparent 2px, rgba(0,255,65,0.01) 2px, rgba(0,255,65,0.01) 4px); }
+    body.hack-mode-active { background: #000500 !important; }
+    body.hack-mode-active .panel, body.hack-mode-active .stat-badge, body.hack-mode-active .lb-item { background: rgba(0,10,0,0.9) !important; border-color: rgba(0,255,65,0.25) !important; }
+    body.hack-mode-active input { background: rgba(0,5,0,0.9) !important; border-color: rgba(0,255,65,0.2) !important; color: #00ff41 !important; }
+    body.hack-mode-active .btn-primary { background: rgba(0,255,65,0.08) !important; border-color: #00ff41 !important; color: #00ff41 !important; }
+    body.hack-mode-active .section-title, body.hack-mode-active .my-score-val { color: #00ff41 !important; }
+    body.hack-mode-active .answer-btn { border-color: rgba(0,255,65,0.2) !important; background: rgba(0,10,0,0.8) !important; }
+    body.hack-mode-active .answer-btn.correct { background: rgba(0,255,65,0.1) !important; border-color: #00ff41 !important; }
+    body.hack-mode-active .timer-ring .ring-progress { stroke: #00ff41 !important; }
+    body.hack-mode-active .timer-number { color: #00ff41 !important; }
+    body.hack-mode-active .progress-bar-fill { background: linear-gradient(90deg,#00ff41,#00cc33) !important; }
+    body.hack-mode-active .lb-score { color: #00ff41 !important; }
+    body.hack-mode-active .my-score-bar { background: rgba(0,5,0,0.95) !important; }
+
+    /* ===== COOK MODE ===== */
+    body.cook-mode-active { background: #0a0500 !important; }
+    body.cook-mode-active .panel, body.cook-mode-active .stat-badge, body.cook-mode-active .lb-item { background: rgba(20,10,0,0.92) !important; border-color: rgba(255,109,0,0.25) !important; }
+    body.cook-mode-active .btn-primary { background: rgba(255,109,0,0.1) !important; border-color: var(--neon-orange) !important; color: var(--neon-orange) !important; }
+    body.cook-mode-active .section-title, body.cook-mode-active .my-score-val { color: var(--neon-orange) !important; }
+    body.cook-mode-active .timer-ring .ring-progress { stroke: var(--neon-orange) !important; }
+    body.cook-mode-active .timer-number { color: var(--neon-orange) !important; }
+    body.cook-mode-active .progress-bar-fill { background: linear-gradient(90deg, var(--neon-orange), var(--neon-yellow)) !important; }
+    body.cook-mode-active .lb-score { color: var(--neon-orange) !important; }
+    body.cook-mode-active .my-score-bar { background: rgba(10,5,0,0.95) !important; border-bottom-color: rgba(255,109,0,0.2) !important; }
+    body.cook-mode-active .answered-badge { background: rgba(255,109,0,0.08) !important; border-color: rgba(255,109,0,0.3) !important; color: var(--neon-orange) !important; }
+
+    /* ===== COOK BONUS ===== */
+    #screen-cook-bonus { position: fixed; inset: 0; z-index: 200; background: #0a0500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 16px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+    #screen-cook-bonus.active { opacity: 1; pointer-events: all; }
+    .cook-bonus-title { font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 0.3em; color: rgba(255,109,0,0.5); text-align: center; }
+    .cook-dish-display { text-align: center; }
+    .cook-dish-icon { display: flex; justify-content: center; margin-bottom: 8px; }
+    .cook-dish-name { font-family: var(--font-display); font-size: clamp(1rem,3vw,1.5rem); color: var(--neon-orange); font-weight: 700; text-shadow: 0 0 15px rgba(255,109,0,0.4); margin-bottom: 4px; }
+    .cook-dish-desc { font-family: var(--font-body); font-size: 0.9rem; color: rgba(255,109,0,0.5); }
+    .cook-bonus-pts { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--neon-yellow); text-align: center; }
+    .cook-bonus-waiting { font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 0.2em; color: rgba(255,109,0,0.4); text-align: center; margin-top: 8px; display: flex; align-items: center; gap: 6px; justify-content: center; }
+
+    /* ===== HACK CUTSCENE ===== */
+    #screen-cutscene { position: fixed; inset: 0; z-index: 200; background: #000500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 40px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+    #screen-cutscene.active { opacity: 1; pointer-events: all; }
+    .cutscene-line { font-family: 'Courier New',monospace; font-size: clamp(1.2rem,3vw,2rem); color: #00ff41; text-align: center; margin-bottom: 8px; opacity: 0; transform: translateY(10px); transition: opacity 0.6s, transform 0.6s; }
+    .cutscene-line.visible { opacity: 1; transform: none; }
+    .cutscene-line.large { font-size: clamp(1.8rem,5vw,3.5rem); font-weight: 700; margin-bottom: 20px; }
+    .cutscene-line.sub { font-size: clamp(0.8rem,2vw,1rem); color: rgba(0,255,65,0.5); letter-spacing: 0.25em; }
+    .cutscene-progress { margin-top: 40px; width: 280px; height: 2px; background: rgba(0,255,65,0.1); border-radius: 1px; overflow: hidden; opacity: 0; transition: opacity 0.5s 1s; }
+    .cutscene-progress.visible { opacity: 1; }
+    .cutscene-progress-fill { height: 100%; width: 0%; background: #00ff41; transition: width 2.5s ease; }
+
+    /* ===== PASSWORD PICKER ===== */
+    #screen-password { position: fixed; inset: 0; z-index: 200; background: #000500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 24px; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+    #screen-password.active { opacity: 1; pointer-events: all; }
+    .pass-title { font-family: 'Courier New',monospace; font-size: 0.7rem; letter-spacing: 0.3em; color: rgba(0,255,65,0.5); text-align: center; }
+    .pass-headline { font-family: 'Courier New',monospace; font-size: clamp(1.2rem,3.5vw,2rem); color: #00ff41; text-shadow: 0 0 20px rgba(0,255,65,0.5); text-align: center; font-weight: 700; }
+    .pass-sub { font-family: 'Courier New',monospace; font-size: 0.85rem; color: rgba(0,255,65,0.4); text-align: center; }
+    .password-grid { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 400px; }
+    .password-btn { background: rgba(0,10,0,0.9); border: 1px solid rgba(0,255,65,0.3); border-radius: 8px; padding: 18px 24px; cursor: pointer; font-family: 'Courier New',monospace; font-size: 1.05rem; color: #00ff41; text-align: left; transition: all 0.2s; display: flex; align-items: center; gap: 14px; }
+    .password-btn:hover { border-color: #00ff41; background: rgba(0,255,65,0.04); transform: translateX(4px); }
+    .pass-key-icon { display: flex; align-items: center; opacity: 0.7; }
+
+    /* ===== HACK MINI-GAME ===== */
+    #screen-hack-minigame { position: fixed; inset: 0; z-index: 200; background: #000500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; gap: 18px; opacity: 0; pointer-events: none; transition: opacity 0.5s; overflow-y: auto; }
+    #screen-hack-minigame.active { opacity: 1; pointer-events: all; }
+    .hack-target-info { text-align: center; }
+    .hack-target-label { font-family: 'Courier New',monospace; font-size: 0.65rem; letter-spacing: 0.3em; color: rgba(0,255,65,0.4); margin-bottom: 6px; }
+    .hack-target-name { font-family: 'Courier New',monospace; font-size: clamp(1.2rem,3vw,1.8rem); color: #00ff41; font-weight: 700; }
+    .hack-terminal { background: rgba(0,8,0,0.95); border: 1px solid rgba(0,255,65,0.2); border-radius: 10px; padding: 20px 24px; width: 100%; max-width: 440px; position: relative; overflow: hidden; }
+    .hack-terminal::before { content:''; position:absolute; top:0; left:0; right:0; height:28px; background: rgba(0,255,65,0.04); border-bottom: 1px solid rgba(0,255,65,0.1); }
+    .hack-terminal-bar { position:absolute; top:8px; left:14px; display:flex; gap:6px; }
+    .hack-terminal-dot { width:8px; height:8px; border-radius:50%; }
+    .hack-terminal-dot:nth-child(1){background:#ff4444;} .hack-terminal-dot:nth-child(2){background:#ffaa00;} .hack-terminal-dot:nth-child(3){background:#00ff41;}
+    .hack-terminal-title { position:absolute; top:7px; left:50%; transform:translateX(-50%); font-family:'Courier New',monospace; font-size:0.65rem; color:rgba(0,255,65,0.4); letter-spacing:0.15em; }
+    .hack-terminal-body { padding-top: 20px; }
+    .hack-log-line { font-family:'Courier New',monospace; font-size:0.82rem; color:rgba(0,255,65,0.7); line-height:1.8; opacity:0; transition:opacity 0.3s; }
+    .hack-log-line.visible { opacity:1; }
+    .hack-log-line.accent { color:#00ff41; }
+    .hack-log-line.warn { color:#ffaa00; }
+    .hack-firewall { width:100%; max-width:440px; background:rgba(0,8,0,0.9); border:1px solid rgba(0,255,65,0.2); border-radius:8px; padding:14px 18px; }
+    .hack-fw-label { font-family:'Courier New',monospace; font-size:0.65rem; letter-spacing:0.2em; color:rgba(0,255,65,0.4); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+    .hack-fw-bar-wrap { height:6px; background:rgba(0,255,65,0.1); border-radius:3px; overflow:hidden; }
+    .hack-fw-bar { height:100%; width:100%; background:linear-gradient(90deg,#00ff41,#ffaa00,#ff4444); border-radius:3px; }
+    .pass-prompt { font-family:'Courier New',monospace; font-size:0.85rem; color:rgba(0,255,65,0.5); text-align:center; max-width:400px; line-height:1.6; }
+    .pass-prompt strong { color:#00ff41; }
+    .hack-pass-choices { display:flex; flex-direction:column; gap:12px; width:100%; max-width:400px; }
+    .hack-pass-btn { background:rgba(0,8,0,0.9); border:1px solid rgba(0,255,65,0.2); border-radius:6px; padding:16px 20px; cursor:pointer; font-family:'Courier New',monospace; font-size:1rem; color:#00ff41; text-align:left; transition:all 0.2s; display:flex; align-items:center; gap:12px; }
+    .hack-pass-btn:hover { border-color:#00ff41; background:rgba(0,255,65,0.04); }
+    .hack-pass-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .hack-pass-btn.hacked { border-color:#00ff41; background:rgba(0,255,65,0.08); }
+    .hack-pass-btn.wrong-pass { border-color:#ff4444; color:rgba(255,0,0,0.6); }
+    .hack-pass-num { font-size:0.65rem; letter-spacing:0.15em; color:rgba(0,255,65,0.3); width:24px; }
+    .hack-result-banner { text-align:center; opacity:0; transition:opacity 0.5s; display:none; }
+    .hack-result-banner.visible { opacity:1; display:block; }
+    .hack-result-title { font-family:'Courier New',monospace; font-size:clamp(1.2rem,3vw,1.8rem); font-weight:700; letter-spacing:0.1em; margin-bottom:6px; }
+    .hack-result-banner.success .hack-result-title { color:#00ff41; }
+    .hack-result-banner.fail .hack-result-title { color:#ff4444; }
+    .hack-result-sub { font-family:'Courier New',monospace; font-size:0.8rem; color:rgba(0,255,65,0.5); letter-spacing:0.1em; }
+    .hack-result-pts { font-family:'Courier New',monospace; font-size:1.1rem; color:#00ff41; margin-top:8px; }
+    .hack-continue-btn { background:transparent; border:1px solid rgba(0,255,65,0.4); border-radius:8px; padding:12px 32px; font-family:'Courier New',monospace; font-size:0.8rem; letter-spacing:0.2em; color:#00ff41; cursor:pointer; transition:all 0.2s; display:none; }
+    .hack-continue-btn.visible { display:block; }
+    .hack-continue-btn:hover { background:rgba(0,255,65,0.06); }
+
+    /* ===== COOK INTRO ===== */
+    #screen-cook-intro { position: fixed; inset: 0; z-index: 200; background: #0a0500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 20px; opacity: 0; pointer-events: none; transition: opacity 0.5s; overflow-y: auto; }
+    #screen-cook-intro.active { opacity: 1; pointer-events: all; }
+    .cook-intro-title { font-family: var(--font-display); font-size: clamp(0.7rem,2vw,0.9rem); letter-spacing: 0.3em; color: rgba(255,109,0,0.6); text-align: center; }
+    .cook-intro-headline { font-family: var(--font-display); font-size: clamp(1.5rem,4vw,2.5rem); color: var(--neon-orange); font-weight: 700; text-align: center; text-shadow: 0 0 20px rgba(255,109,0,0.4); }
+    .cook-intro-sub { font-family: var(--font-body); font-size: 1rem; color: rgba(255,109,0,0.55); text-align: center; max-width: 420px; line-height: 1.6; }
+    .food-tiers { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 420px; }
+    .food-tier { background: rgba(20,10,0,0.9); border: 1px solid rgba(255,109,0,0.2); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; }
+    .food-tier-icon { display: flex; align-items: center; flex-shrink: 0; }
+    .food-tier-info { flex: 1; }
+    .food-tier-name { font-family: var(--font-display); font-size: 0.7rem; letter-spacing: 0.12em; color: var(--neon-orange); margin-bottom: 2px; }
+    .food-tier-desc { font-family: var(--font-body); font-size: 0.85rem; color: rgba(255,109,0,0.5); }
+    .food-tier-pts { font-family: var(--font-display); font-size: 0.7rem; color: var(--neon-yellow); letter-spacing: 0.1em; }
+    .cook-continue-btn { background: transparent; border: 1px solid rgba(255,109,0,0.4); border-radius: 8px; padding: 14px 36px; font-family: var(--font-display); font-size: 0.75rem; letter-spacing: 0.2em; color: var(--neon-orange); cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    .cook-continue-btn:hover { background: rgba(255,109,0,0.08); box-shadow: 0 0 20px rgba(255,109,0,0.2); }
+
+    /* ===== LB AVATAR WITH IMG SUPPORT ===== */
+    .lb-avatar-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .home-main { padding: 40px 20px 80px; }
+      .home-cta-card { padding: 24px 20px; }
+    }
   </style>
 </head>
 <body>
 
-<!-- JOIN SCREEN -->
-<div class="screen active" id="screen-join">
-  <div style="text-align:center;margin-bottom:40px;" class="fade-up">
-    <img src="https://iili.io/BU5hHLQ.png" alt="Quizix" class="logo-img" onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='block';" />
-    <div class="logo" id="logo-fallback" style="display:none;">Quiz<span>ix</span></div>
-    <div class="tagline">Enter the Digital Arena</div>
+<canvas id="matrix-canvas"></canvas>
+<div id="scan-glitch" style="display:none;"></div>
+
+<!-- Top Right Bar -->
+<div class="top-bar-right" id="top-bar-right" style="display:none;">
+  <div class="pro-active-badge" id="pro-active-badge">
+    <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    PRO
   </div>
-  <div class="panel fade-up-2">
-    <div class="step-indicator">
-      <div class="step-dot active" id="dot-0"></div>
-      <div class="step-dot" id="dot-1"></div>
-    </div>
+  <div class="brain-bits-badge" id="brain-bits-badge">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="flex-shrink:0;">
+      <path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9.5 2a4.5 4.5 0 014.5 4.5c0 .621-.126 1.213-.354 1.75A4.502 4.502 0 0117 12.5c0 1.68-.922 3.146-2.293 3.93A4.5 4.5 0 0110 21H9.5A4.5 4.5 0 015 16.5V6.5A4.5 4.5 0 019.5 2z"/>
+    </svg>
+    <span id="bb-display">0B</span>
+  </div>
+  <div class="brain-bits-tooltip" id="bb-tooltip">0 brain bits</div>
+  <button class="theme-toggle" id="theme-toggle-btn" style="position:static;top:auto;right:auto;">
+    <span id="theme-icon">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </span>
+    <span id="theme-label">DARK</span>
+  </button>
+</div>
 
-    <!-- STEP 1: PIN + NAME -->
-    <div class="profile-step active" id="step-0">
-      <div class="section-title">Player Login</div>
-      <div class="section-sub">Join a Game</div>
-      <div class="input-group">
-        <div class="input-label">Game PIN</div>
-        <input type="text" class="pin-input" id="input-pin" maxlength="6" placeholder="••••••" autocomplete="off" inputmode="numeric" />
+<!-- ===== HOME SCREEN ===== -->
+<div class="screen active" id="screen-home">
+  <div class="home-layout">
+    <aside class="sidebar" id="main-sidebar">
+      <div class="sidebar-logo">
+        <img src="https://iili.io/BU5hHLQ.png" alt="Quizix" class="sidebar-logo-img"
+          onerror="this.style.display='none';document.getElementById('sb-logo-text').style.display='block';" />
+        <div class="sidebar-logo-text" id="sb-logo-text" style="display:none;">Quiz<span>ix</span></div>
       </div>
-      <div class="input-group">
-        <div class="input-label">Your Callsign</div>
-        <input type="text" id="input-name" maxlength="20" placeholder="Enter callsign..." autocomplete="off" />
-      </div>
-      <button class="btn btn-primary" id="btn-next-step" style="margin-top:8px;">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 12h14"/></svg>
-        Next: Build Profile
+      <div class="sidebar-nav-label">NAVIGATION</div>
+      <button class="sidebar-btn active" id="sb-home-btn" onclick="showSidebarPanel('home')">
+        <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="9 22 9 12 15 12 15 22"/></svg></span>Home
       </button>
-      <div class="divider"></div>
-      <div style="text-align:center;">
-        <a href="host.html" style="color:var(--text-secondary);font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.15em;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          HOST A GAME
-        </a>
-      </div>
-      <div class="legal-footer" style="margin-top:12px;">
-        <a onclick="openLegal('terms')">TERMS</a>
-        <a onclick="openLegal('privacy')">PRIVACY</a>
-        <a onclick="openLegal('cookies')">COOKIES</a>
-      </div>
-    </div>
+      <button class="sidebar-btn" id="sb-profile-btn" onclick="showSidebarPanel('profile')">
+        <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle stroke="currentColor" stroke-width="1.8" cx="12" cy="7" r="4"/></svg></span>Edit Profile
+      </button>
+      <button class="sidebar-btn" id="sb-saved-btn" onclick="showSidebarPanel('saved')">
+        <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="17 21 17 13 7 13 7 21"/><polyline stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="7 3 7 8 15 8"/></svg></span>Saved Quizzes
+        <span class="sb-badge" id="saved-count-badge">0</span>
+      </button>
+      <div class="sidebar-nav-label">LINKS</div>
+      <a href="host.html" class="sidebar-btn" style="text-decoration:none;">
+        <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></span>Host a Game
+      </a>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-version">QUIZIX ALPHA</div>
+    </aside>
 
-    <!-- STEP 2: AVATAR -->
-    <div class="profile-step" id="step-1">
-      <div class="section-title">Profile Maker</div>
-      <div class="section-sub">Choose Your Avatar</div>
-      <div style="display:flex;justify-content:center;margin-bottom:20px;">
-        <div class="profile-preview" id="profile-preview" style="background:rgba(0,245,255,0.1);">
-          <span id="avatar-display">👾</span>
+    <main class="home-main" id="home-main-area">
+      <!-- HOME PANEL -->
+      <div id="panel-home" class="sidebar-panel panel-active" style="display:flex;align-items:center;flex-direction:column;justify-content:center;width:100%;max-width:100%;padding:40px;">
+        <div class="home-hero fade-up">
+          <img src="https://iili.io/Bg2rBmG.png" alt="Quizix" class="home-hero-img"
+            onerror="this.style.display='none';document.getElementById('hero-logo-fallback').style.display='block';" />
+          <div class="logo" id="hero-logo-fallback" style="display:none;">Quiz<span>ix</span></div>
+          <div class="home-tagline">ENTER THE DIGITAL ARENA</div>
+        </div>
+        <div class="home-cta-card fade-up-2">
+          <div class="section-title">Join a Game</div>
+          <div class="section-sub" style="margin-bottom:20px;">Enter Credentials</div>
+          <div class="step-indicator">
+            <div class="step-dot active" id="dot-0"></div>
+            <div class="step-dot" id="dot-1"></div>
+          </div>
+          <div class="profile-step active" id="step-0">
+            <div class="input-group">
+              <div class="input-label">Game PIN</div>
+              <input type="text" class="pin-input" id="input-pin" maxlength="6" placeholder="••••••" autocomplete="off" inputmode="numeric" />
+            </div>
+            <div class="input-group">
+              <div class="input-label">Your Callsign</div>
+              <input type="text" id="input-name" maxlength="20" placeholder="Enter name..." autocomplete="off" />
+            </div>
+            <button class="btn btn-primary" id="btn-next-step" style="margin-top:8px;">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 12h14"/></svg>
+              Next: Build Profile
+            </button>
+            <div class="divider"></div>
+            <div style="text-align:center;">
+              <a href="host.html" style="color:var(--text-secondary);font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.15em;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">HOST A GAME →</a>
+            </div>
+            <div class="legal-footer" style="margin-top:12px;">
+              <a onclick="openLegal('terms')">TERMS</a>
+              <a onclick="openLegal('privacy')">PRIVACY</a>
+              <a onclick="openLegal('cookies')">COOKIES</a>
+            </div>
+          </div>
+          <div class="profile-step" id="step-1">
+            <div class="section-title" style="margin-bottom:4px;">Choose Your Avatar</div>
+            <div style="display:flex;justify-content:center;margin-bottom:20px;margin-top:12px;">
+              <div class="profile-preview" id="profile-preview" style="background:rgba(0,245,255,0.1);overflow:hidden;">
+                <span id="avatar-display">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 15s1 1.5 3 1.5 3-1.5 3-1.5"/></svg>
+                </span>
+              </div>
+            </div>
+            <!-- Pro custom image shown here if active -->
+            <div id="pro-join-img-notice" style="display:none;text-align:center;margin-bottom:12px;font-family:var(--font-display);font-size:0.6rem;letter-spacing:0.12em;color:var(--neon-yellow);">
+              <svg width="10" height="10" fill="var(--neon-yellow)" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              PRO — Using your custom profile photo
+            </div>
+            <div class="input-label" style="margin-bottom:8px;">Avatar</div>
+            <div class="avatar-picker" id="avatar-picker"></div>
+            <div class="input-label" style="margin-bottom:8px;margin-top:4px;">Colour</div>
+            <div class="color-picker" id="color-picker"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+              <button class="btn btn-secondary" id="btn-back-0" style="flex:1;">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
+                Back
+              </button>
+              <button class="btn btn-primary" id="btn-join" style="flex:2;width:auto;">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Launch Into Arena
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="home-stats fade-up-3" id="home-stats" style="margin-top:20px;">
+          <div class="stat-badge">
+            <div class="s-val" id="stat-bb-display">0</div>
+            <div class="s-label">Brain Bits</div>
+          </div>
+          <div class="stat-badge">
+            <div class="s-val" id="stat-games-played">0</div>
+            <div class="s-label">Games Played</div>
+          </div>
+          <div class="stat-badge">
+            <div class="s-val" id="stat-saved-quizzes">0</div>
+            <div class="s-label">Saved Quizzes</div>
+          </div>
         </div>
       </div>
-      <div class="input-label" style="margin-bottom:8px;">Avatar</div>
-      <div class="avatar-picker" id="avatar-picker"></div>
-      <div class="input-label" style="margin-bottom:8px;margin-top:4px;">Colour</div>
-      <div class="color-picker" id="color-picker"></div>
-      <div style="display:flex;gap:10px;margin-top:16px;">
-        <button class="btn btn-secondary" id="btn-back-0" style="flex:1;">
+
+      <!-- EDIT PROFILE PANEL -->
+      <div id="panel-profile" class="sidebar-panel" style="margin:0 auto;">
+        <div class="section-title">Edit Profile</div>
+        <div class="section-sub" style="margin-bottom:4px;">Your Identity</div>
+
+        <div class="profile-edit-avatar-wrap">
+          <div class="profile-edit-avatar" id="profile-edit-avatar-preview">
+            <svg width="32" height="32" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 15s1 1.5 3 1.5 3-1.5 3-1.5"/></svg>
+          </div>
+          <div class="profile-edit-info">
+            <div class="profile-edit-name" id="profile-edit-name-display">No name yet</div>
+            <div class="profile-edit-sub" id="profile-edit-sub-display">Quizix Player</div>
+          </div>
+        </div>
+
+        <!-- Pro Section — shows upload if Pro, upsell if not -->
+        <div class="pro-locked-section" id="pro-section">
+          <div class="pro-locked-header">
+            <span class="pro-lock-icon" id="pro-lock-icon">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" stroke="var(--neon-yellow)" stroke-width="1.8"/><path stroke="var(--neon-yellow)" stroke-width="1.8" stroke-linecap="round" d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </span>
+            <span class="pro-locked-title" id="pro-section-title">CUSTOM PROFILE IMAGE — QUIZIX PRO</span>
+          </div>
+
+          <!-- Non-Pro: upsell button -->
+          <button class="pro-img-upload-btn" id="pro-upload-btn" style="display:flex;">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle stroke="currentColor" stroke-width="1.5" cx="12" cy="13" r="4"/></svg>
+            <span>Upload a custom profile photo</span>
+            <span style="font-size:0.75rem;color:var(--text-muted);">Appears in quiz leaderboards</span>
+          </button>
+
+          <!-- Pro active: real upload -->
+          <div id="pro-upload-active" style="display:none;flex-direction:column;gap:14px;">
+            <div class="pro-upload-preview" id="pro-upload-preview">
+              <div class="pro-upload-img-wrap">
+                <img id="pro-preview-img" src="" alt="Profile photo" />
+              </div>
+              <button class="btn btn-danger" style="padding:8px 18px;font-size:0.65rem;" id="pro-remove-photo-btn">Remove Photo</button>
+            </div>
+            <label style="cursor:pointer;">
+              <div class="pro-img-upload-btn" style="border-color:rgba(255,230,0,0.35);color:var(--neon-yellow);">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <span id="pro-upload-label">Upload Profile Photo</span>
+                <span style="font-size:0.75rem;color:rgba(255,230,0,0.5);">JPG, PNG, GIF — shown on all leaderboards</span>
+              </div>
+              <input type="file" id="pro-file-input" accept="image/*" style="display:none;" />
+            </label>
+            <div style="font-family:var(--font-display);font-size:0.6rem;letter-spacing:0.1em;color:var(--neon-yellow);background:rgba(255,230,0,0.06);border:1px solid rgba(255,230,0,0.15);border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:6px;">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              PRO ACTIVE — 1.5× points multiplier + bonus Brain Bits
+            </div>
+            <!-- Cancel subscription -->
+            <button class="pro-cancel-btn" id="pro-cancel-btn">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M9 9l6 6M15 9l-6 6"/></svg>
+              Cancel Pro Subscription (refund 250B)
+            </button>
+          </div>
+        </div>
+
+        <div class="bb-earning-guide">
+          <div class="section-title" style="margin-bottom:14px;">How to Earn Brain Bits</div>
+          <div class="bb-earn-row">
+            <div class="bb-earn-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="var(--neon-cyan)" stroke-width="1.5"/><path stroke="var(--neon-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg></div>
+            <div class="bb-earn-info">
+              <div class="bb-earn-title">Score 75%+ on a quiz</div>
+              <div class="bb-earn-desc" id="bb-75-desc">Earn bits for performing well</div>
+            </div>
+            <div class="bb-earn-reward" id="bb-75-reward">+25B</div>
+          </div>
+          <div class="bb-earn-row">
+            <div class="bb-earn-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg></div>
+            <div class="bb-earn-info">
+              <div class="bb-earn-title">Score 100% on a quiz</div>
+              <div class="bb-earn-desc" id="bb-100-desc">Perfect game = perfect reward</div>
+            </div>
+            <div class="bb-earn-reward" id="bb-100-reward">+75B</div>
+          </div>
+          <div class="bb-earn-row">
+            <div class="bb-earn-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+            <div class="bb-earn-info">
+              <div class="bb-earn-title">Quizix Pro subscription</div>
+              <div class="bb-earn-desc">1.5× points + custom profile image</div>
+            </div>
+            <div class="bb-earn-reward" style="color:var(--neon-yellow);">500B/mo</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" onclick="showSidebarPanel('home')" style="display:inline-flex;align-items:center;gap:6px;">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
-          Back
-        </button>
-        <button class="btn btn-primary" id="btn-join" style="flex:2;width:auto;">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          Launch Into Arena
+          Back to Home
         </button>
       </div>
-    </div>
+
+      <!-- SAVED QUIZZES PANEL -->
+      <div id="panel-saved" class="sidebar-panel" style="margin:0 auto;">
+        <div class="section-title">Saved Quizzes</div>
+        <div class="section-sub" style="margin-bottom:4px;">Your Quiz Library</div>
+        <div id="saved-quizzes-list"></div>
+        <button class="btn btn-secondary" onclick="showSidebarPanel('home')" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
+          Back to Home
+        </button>
+      </div>
+    </main>
   </div>
 </div>
 
-<!-- LOBBY WAITING -->
+<!-- ===== HACK CUTSCENE ===== -->
+<div id="screen-cutscene">
+  <div class="cutscene-line sub" id="cs-line-0">[ QUIZIX UNDERGROUND NETWORK ]</div>
+  <div class="cutscene-line" id="cs-line-1">INITIALIZING SECURE TUNNEL...</div>
+  <div class="cutscene-line" id="cs-line-2">CONNECTION ESTABLISHED</div>
+  <div class="cutscene-line large" id="cs-line-3">WELCOME, HACKER</div>
+  <div class="cutscene-line large" style="color:#00ff41;font-size:clamp(2rem,6vw,4rem);" id="cs-line-name">___</div>
+  <div class="cutscene-line sub" id="cs-line-4" style="margin-top:8px;">IDENTITY CONFIRMED — CLEARANCE LEVEL 5</div>
+  <div class="cutscene-progress" id="cs-progress"><div class="cutscene-progress-fill" id="cs-progress-fill"></div></div>
+</div>
+
+<!-- ===== PASSWORD PICKER ===== -->
+<div id="screen-password">
+  <div class="pass-title">SECURITY PROTOCOL ALPHA-7</div>
+  <div class="pass-headline">CHOOSE YOUR PASSWORD</div>
+  <div class="pass-sub">// 3 of 50 possible ciphers — chosen at random</div>
+  <div class="password-grid" id="password-grid"></div>
+</div>
+
+<!-- ===== COOK INTRO ===== -->
+<div id="screen-cook-intro">
+  <div class="cook-intro-title">CHEF'S ARENA — WELCOME</div>
+  <div class="cook-intro-headline" id="cook-intro-name">CHEF ___</div>
+  <div class="cook-intro-sub">Correct answers earn points. More points = better ingredients. The host serves dishes — the better your score, the tastier the dish and the more bonus points you earn!</div>
+  <div class="food-tiers">
+    <div class="food-tier"><div class="food-tier-icon"><svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 6 4 9 4 14a8 8 0 0016 0c0-5-4-8-8-12z"/><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" d="M12 14v4"/></svg></div><div class="food-tier-info"><div class="food-tier-name">INSTANT NOODLES</div><div class="food-tier-desc">0–999 pts — basic but filling</div></div><div class="food-tier-pts">+50 bonus</div></div>
+    <div class="food-tier"><div class="food-tier-icon"><svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" d="M6 1v3M10 1v3M14 1v3"/></svg></div><div class="food-tier-info"><div class="food-tier-name">STREET BURGER</div><div class="food-tier-desc">1000–2499 pts — solid grub</div></div><div class="food-tier-pts">+150 bonus</div></div>
+    <div class="food-tier"><div class="food-tier-icon"><svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div><div class="food-tier-info"><div class="food-tier-name">PRIME STEAK</div><div class="food-tier-desc">2500–4999 pts — now we're cooking</div></div><div class="food-tier-pts">+350 bonus</div></div>
+    <div class="food-tier"><div class="food-tier-icon"><svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 2 4 6 4 10c0 5 4 10 8 12 4-2 8-7 8-12 0-4-4-8-8-8z"/><circle cx="12" cy="10" r="3" stroke="var(--neon-orange)" stroke-width="1.5"/></svg></div><div class="food-tier-info"><div class="food-tier-name">LOBSTER THERMIDOR</div><div class="food-tier-desc">5000+ pts — elite cuisine</div></div><div class="food-tier-pts">+600 bonus</div></div>
+  </div>
+  <button class="cook-continue-btn" id="cook-intro-continue">ENTER THE KITCHEN →</button>
+</div>
+
+<!-- ===== COOK BONUS ===== -->
+<div id="screen-cook-bonus">
+  <div class="cook-bonus-title">[ CHEF SERVED A DISH ]</div>
+  <div class="cook-dish-display">
+    <div class="cook-dish-icon" id="cook-dish-icon"></div>
+    <div class="cook-dish-name" id="cook-dish-name">INSTANT NOODLES</div>
+    <div class="cook-dish-desc" id="cook-dish-desc">Simple but satisfying</div>
+  </div>
+  <div class="cook-bonus-pts" id="cook-bonus-pts">+50 pts bonus</div>
+  <div class="cook-bonus-waiting">
+    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="animation:spin 1.2s linear infinite;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+    AWAITING NEXT QUESTION...
+  </div>
+</div>
+
+<!-- ===== HACK MINI-GAME ===== -->
+<div id="screen-hack-minigame">
+  <div class="hack-target-info">
+    <div class="hack-target-label">[ TARGET ACQUIRED ]</div>
+    <div class="hack-target-name" id="hack-target-name">PLAYER_ALPHA</div>
+  </div>
+  <div class="hack-terminal">
+    <div class="hack-terminal-bar"><div class="hack-terminal-dot"></div><div class="hack-terminal-dot"></div><div class="hack-terminal-dot"></div></div>
+    <div class="hack-terminal-title">QUIZIX_SHELL v3.1.4</div>
+    <div class="hack-terminal-body">
+      <div class="hack-log-line" id="hlog-1">$ connecting to target node...</div>
+      <div class="hack-log-line" id="hlog-2">$ bypassing NAT layer... <span style="color:#00ff41;">OK</span></div>
+      <div class="hack-log-line accent" id="hlog-3">$ FIREWALL DETECTED — initiating crack</div>
+      <div class="hack-log-line warn" id="hlog-4">$ WARNING: intrusion countermeasures active</div>
+      <div class="hack-log-line accent" id="hlog-5">$ PASSWORD REQUIRED TO BREACH</div>
+    </div>
+  </div>
+  <div class="hack-firewall">
+    <div class="hack-fw-label"><span>FIREWALL STATUS</span><span id="fw-status-text" style="color:#ffaa00;">ACTIVE</span></div>
+    <div class="hack-fw-bar-wrap"><div class="hack-fw-bar" id="fw-bar"></div></div>
+  </div>
+  <div class="pass-prompt">Hacking <strong id="hack-pass-victim">PLAYER_ALPHA</strong>'s firewall.<br>What's their password?</div>
+  <div class="hack-pass-choices" id="hack-pass-choices"></div>
+  <div class="hack-result-banner" id="hack-result-banner">
+    <div class="hack-result-title" id="hack-result-title">ACCESS GRANTED</div>
+    <div class="hack-result-sub" id="hack-result-sub">FIREWALL BREACHED</div>
+    <div class="hack-result-pts" id="hack-result-pts">+250 pts stolen</div>
+  </div>
+  <button class="hack-continue-btn" id="hack-continue-btn">[ CONTINUE ]</button>
+</div>
+
+<!-- LOBBY -->
 <div class="screen" id="screen-lobby-player">
   <div class="waiting-pulse">
-    <svg width="36" height="36" fill="none" viewBox="0 0 24 24" style="color:var(--neon-cyan);">
-      <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-      <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
+    <svg width="36" height="36" fill="none" viewBox="0 0 24 24" style="color:var(--neon-cyan);"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
   </div>
   <div style="text-align:center;margin-bottom:32px;" class="fade-up">
-    <div class="section-title">Lobby</div>
+    <div class="section-title" id="lobby-section-title">Lobby</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
-      <div class="profile-preview" id="lobby-avatar-preview" style="width:64px;height:64px;font-size:1.8rem;margin:0 0 8px;">👾</div>
+      <div class="profile-preview" id="lobby-avatar-preview" style="width:64px;height:64px;font-size:1.8rem;margin:0 0 8px;overflow:hidden;"></div>
       <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--text-primary);" id="player-welcome-name">Player</div>
     </div>
-    <div style="font-family:var(--font-body);color:var(--text-secondary);margin-top:6px;font-size:1rem;">You've entered the arena. Await the host.</div>
+    <div style="font-family:var(--font-body);color:var(--text-secondary);margin-top:6px;font-size:1rem;" id="lobby-wait-text">You've entered the arena. Await the host.</div>
   </div>
   <div class="stat-row fade-up-2">
-    <div class="stat-badge">
-      <div class="s-val" id="lobby-player-count">0</div>
-      <div class="s-label">Players Ready</div>
-    </div>
-    <div class="stat-badge">
-      <div class="s-val" id="lobby-q-count">0</div>
-      <div class="s-label">Questions</div>
-    </div>
+    <div class="stat-badge"><div class="s-val" id="lobby-player-count">0</div><div class="s-label" id="lobby-players-label">Players Ready</div></div>
+    <div class="stat-badge"><div class="s-val" id="lobby-q-count">0</div><div class="s-label">Questions</div></div>
   </div>
   <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.25em;color:var(--text-muted);">GAME PIN: <span id="lobby-room-pin" style="color:var(--neon-cyan);"></span></div>
 </div>
@@ -182,19 +702,19 @@
 <div class="screen" id="screen-question">
   <div class="my-score-bar" id="player-score-bar">
     <div>
-      <div class="my-score-label">SCORE</div>
+      <div class="my-score-label" id="score-label">SCORE</div>
       <div class="my-score-val" id="my-score-display">0</div>
     </div>
-    <div class="answered-badge" id="answered-badge" style="display:none;">
-      <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      LOCKED IN
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="pro-pts-badge" style="display:none;font-family:var(--font-display);font-size:0.55rem;letter-spacing:0.1em;color:var(--neon-yellow);background:rgba(255,230,0,0.08);border:1px solid rgba(255,230,0,0.2);border-radius:4px;padding:3px 8px;">1.5× PRO</div>
+      <div class="answered-badge" id="answered-badge" style="display:none;">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span id="answered-label">LOCKED IN</span>
+      </div>
     </div>
     <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;color:var(--text-secondary);" id="hud-qnum">Q1</div>
   </div>
-
   <div class="question-number" id="q-number-label">Question 1 of 10</div>
-
-  <!-- Timer (hidden for slides) -->
   <div class="timer-wrap" id="timer-wrap-el">
     <div class="timer-ring" id="timer-ring">
       <svg width="80" height="80" viewBox="0 0 80 80">
@@ -204,38 +724,20 @@
       <div class="timer-number" id="timer-display">20</div>
     </div>
   </div>
-
-  <div class="progress-bar-wrap">
-    <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
-  </div>
-
-  <!-- Question image -->
-  <div class="q-image-wrap" id="q-image-wrap" style="display:none;">
-    <img id="q-image" src="" alt="Question image" />
-  </div>
-
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+  <div class="q-image-wrap" id="q-image-wrap" style="display:none;"><img id="q-image" src="" alt="Question image" /></div>
   <div class="question-text" id="question-text">Loading question...</div>
-
-  <!-- Mode hints -->
-  <div class="multi-hint" id="multi-hint">☑ SELECT ALL CORRECT ANSWERS — THEN SUBMIT</div>
-  <div class="poll-hint" id="poll-hint">📊 POLL — YOUR OPINION MATTERS</div>
-
+  <div class="multi-hint" id="multi-hint">SELECT ALL CORRECT — THEN SUBMIT</div>
+  <div class="poll-hint" id="poll-hint">POLL — YOUR OPINION</div>
   <div class="answer-grid" id="answer-grid">
     <button class="answer-btn" data-choice="0"><div class="answer-label">A</div><span class="answer-text"></span></button>
     <button class="answer-btn" data-choice="1"><div class="answer-label">B</div><span class="answer-text"></span></button>
     <button class="answer-btn" data-choice="2"><div class="answer-label">C</div><span class="answer-text"></span></button>
     <button class="answer-btn" data-choice="3"><div class="answer-label">D</div><span class="answer-text"></span></button>
   </div>
-
-  <!-- Multi-answer submit -->
-  <div class="multi-submit-wrap" id="multi-submit-wrap">
-    <button class="btn btn-primary" id="btn-multi-submit" style="width:auto;padding:14px 40px;">
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      Submit Answers
-    </button>
+  <div class="multi-submit-wrap" id="multi-submit-wrap" style="display:none;">
+    <button class="btn btn-primary" id="btn-multi-submit" style="width:auto;padding:14px 40px;">Submit Answers</button>
   </div>
-
-  <!-- Info slide continue button -->
   <div id="slide-continue-wrap" style="display:none;justify-content:center;margin-top:24px;">
     <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.2em;color:var(--text-muted);text-align:center;">
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="animation:spin 1.4s linear infinite;display:inline;vertical-align:middle;margin-right:4px;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
@@ -248,25 +750,28 @@
 <div class="screen" id="screen-result">
   <div style="text-align:center;" class="fade-up">
     <div id="result-icon" style="margin-bottom:16px;display:flex;justify-content:center;"></div>
-    <div id="result-title" style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--neon-cyan);text-shadow:0 0 20px rgba(0,245,255,0.4);margin-bottom:8px;">Correct!</div>
+    <div id="result-title" style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--neon-cyan);margin-bottom:8px;">Correct!</div>
     <div id="result-pts" style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-secondary);">+850 pts</div>
+    <div id="result-pts-pro" style="display:none;font-family:var(--font-display);font-size:0.75rem;color:var(--neon-yellow);margin-top:4px;">
+      <svg width="10" height="10" fill="var(--neon-yellow)" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:3px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      PRO 1.5× multiplier applied
+    </div>
   </div>
   <div class="divider" style="max-width:300px;width:100%;margin:28px auto;"></div>
   <div style="text-align:center;" class="fade-up-2">
-    <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.2em;color:var(--text-secondary);margin-bottom:6px;">TOTAL SCORE</div>
+    <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.2em;color:var(--text-secondary);margin-bottom:6px;" id="total-score-label">TOTAL SCORE</div>
     <div id="result-total" style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:var(--text-primary);">0</div>
   </div>
   <div style="margin-top:24px;font-family:var(--font-body);font-size:1rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;justify-content:center;" class="fade-up-3">
     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="animation:spin 1.4s linear infinite;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-    Waiting for leaderboard...
+    <span id="waiting-lb-text">Waiting for leaderboard...</span>
   </div>
 </div>
-<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 
 <!-- LEADERBOARD SCREEN -->
 <div class="screen" id="screen-leaderboard">
   <div style="text-align:center;margin-bottom:28px;" class="fade-up">
-    <div class="section-title">Leaderboard</div>
+    <div class="section-title" id="lb-section-title">Leaderboard</div>
     <div class="section-sub" style="margin-bottom:0;">Current Standings</div>
   </div>
   <div class="leaderboard" id="player-leaderboard"></div>
@@ -276,9 +781,10 @@
 <div class="screen" id="screen-final">
   <div style="text-align:center;" class="fade-up">
     <img src="https://iili.io/BU5hHLQ.png" alt="Quizix" class="logo-img" onerror="this.style.display='none';" />
-    <div class="section-title" style="margin-bottom:24px;">Game Over</div>
+    <div class="section-title" style="margin-bottom:24px;" id="final-title">Game Over</div>
     <div style="display:flex;justify-content:center;margin-bottom:16px;" id="final-icon"></div>
-    <div id="final-rank-msg" style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--neon-cyan);text-shadow:0 0 15px rgba(0,245,255,0.4);letter-spacing:0.1em;margin-bottom:24px;">You placed #1!</div>
+    <div id="final-rank-msg" style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--neon-cyan);letter-spacing:0.1em;margin-bottom:24px;">You placed #1!</div>
+    <div id="bb-earned-banner" style="display:none;font-family:var(--font-display);font-size:0.75rem;letter-spacing:0.15em;color:var(--neon-yellow);background:rgba(255,230,0,0.08);border:1px solid rgba(255,230,0,0.2);border-radius:8px;padding:10px 20px;margin-bottom:20px;"></div>
   </div>
   <div class="stat-row fade-up-2">
     <div class="stat-badge"><div class="s-val" id="final-score">0</div><div class="s-label">Final Score</div></div>
@@ -286,10 +792,39 @@
     <div class="stat-badge"><div class="s-val" id="final-rank">—</div><div class="s-label">Rank</div></div>
   </div>
   <div class="leaderboard fade-up-3" id="final-leaderboard" style="max-width:400px;"></div>
-  <button class="btn btn-secondary" id="btn-play-again" style="margin-top:28px;display:inline-flex;align-items:center;gap:8px;">
+  <button class="btn btn-secondary" id="btn-play-again" style="margin-top:28px;">
     <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
     Play Again
   </button>
+</div>
+
+<!-- ===== PRO MODAL ===== -->
+<div class="pro-modal-overlay" id="pro-modal">
+  <div class="pro-modal-box">
+    <button class="pro-modal-close" id="pro-modal-close">✕</button>
+    <div class="pro-modal-img-wrap">
+      <img src="https://iili.io/BghBKMu.png" alt="Quizix Pro" class="pro-modal-img"
+        onerror="this.style.display='none';document.getElementById('pro-img-fallback').style.display='flex';" />
+      <div id="pro-img-fallback" style="display:none;font-size:3rem;">
+        <svg width="64" height="64" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-yellow)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+    </div>
+    <div class="pro-modal-body">
+      <div class="pro-modal-title">Quizix Pro — Unlock More</div>
+      <div class="pro-modal-sub">Custom profile photo, 1.5× points on every answer, and bigger Brain Bits rewards.</div>
+      <div class="pro-modal-features">
+        <div class="pro-feature-row"><span class="pf-check"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Custom profile photo in all leaderboards</div>
+        <div class="pro-feature-row"><span class="pf-check"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>1.5× points multiplier on every answer</div>
+        <div class="pro-feature-row"><span class="pf-check"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>75B for 75%+, 125B for 100% quiz score</div>
+        <div class="pro-feature-row"><span class="pf-check"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>More Pro features coming soon</div>
+      </div>
+      <button class="pro-buy-btn" id="pro-buy-btn">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Buy for 500B/month
+      </button>
+      <div class="pro-bb-balance" id="pro-bb-balance-text">Your balance: 0B brain bits</div>
+    </div>
+  </div>
 </div>
 
 <!-- LEGAL MODAL -->
@@ -302,11 +837,7 @@
 
 <!-- COOKIE BANNER -->
 <div class="cookie-banner" id="cookie-banner">
-  <div class="cookie-text">
-    🍪 We use cookies to keep your session running smoothly. See our
-    <a onclick="openLegal('cookies')">Cookie Policy</a> and
-    <a onclick="openLegal('privacy')">Privacy Policy</a>.
-  </div>
+  <div class="cookie-text">We use cookies to keep your session running. See our <a onclick="openLegal('cookies')">Cookie Policy</a> and <a onclick="openLegal('privacy')">Privacy Policy</a>.</div>
   <div style="display:flex;gap:10px;">
     <button class="btn btn-secondary" style="padding:10px 18px;font-size:0.65rem;" onclick="openLegal('cookies')">Learn More</button>
     <button class="btn btn-primary" style="padding:10px 20px;font-size:0.65rem;width:auto;" onclick="acceptCookies()">Accept</button>
@@ -331,100 +862,414 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ===== STATE =====
 let roomCode = null, playerId = null, playerName = null;
 let myScore = 0, correctCount = 0, hasAnswered = false;
 let timerInterval = null, currentAnswerIndex = null, unsubRoom = null, lastQuestionIndex = -1;
-let selectedAvatar = '👾', selectedColor = 'rgba(0,245,255,0.15)', selectedColorHex = '#00f5ff';
+let selectedAvatar = 'default', selectedColor = 'rgba(0,245,255,0.15)', selectedColorHex = '#00f5ff';
 let multiSelected = new Set();
 let currentQType = 'mc';
+let gameMode = 'normal';
+let myPassword = null;
+let totalQuestions = 0;
+
+// ===== PRO & BRAIN BITS =====
+let brainBits = parseInt(localStorage.getItem('qx_brain_bits') || '0');
+let hasProSubscription = localStorage.getItem('qx_pro') === '1';
+let proPhotoData = localStorage.getItem('qx_pro_photo') || null; // base64 data URL
+let gamesPlayed = parseInt(localStorage.getItem('qx_games_played') || '0');
+let savedQuizzes = JSON.parse(localStorage.getItem('qx_saved_quizzes') || '[]');
+
+function saveBrainBits() { localStorage.setItem('qx_brain_bits', brainBits); }
+
+function updateBrainBitsUI() {
+  document.getElementById('bb-display').textContent = brainBits + 'B';
+  document.getElementById('bb-tooltip').textContent = brainBits + ' brain bits';
+  document.getElementById('stat-bb-display').textContent = brainBits;
+  document.getElementById('pro-bb-balance-text').textContent = `Your balance: ${brainBits}B brain bits`;
+  document.getElementById('pro-active-badge').classList.toggle('visible', hasProSubscription);
+  if (hasProSubscription) {
+    document.getElementById('bb-75-reward').textContent = '+75B';
+    document.getElementById('bb-75-desc').textContent = 'Pro: double reward for performing well';
+    document.getElementById('bb-100-reward').textContent = '+125B';
+    document.getElementById('bb-100-desc').textContent = 'Pro: bigger perfect game reward';
+  } else {
+    document.getElementById('bb-75-reward').textContent = '+25B';
+    document.getElementById('bb-75-desc').textContent = 'Earn bits for performing well';
+    document.getElementById('bb-100-reward').textContent = '+75B';
+    document.getElementById('bb-100-desc').textContent = 'Perfect game = perfect reward';
+  }
+}
+
+function awardBrainBits(pct) {
+  let earned = 0;
+  if (pct >= 100) earned = hasProSubscription ? 125 : 75;
+  else if (pct >= 75) earned = hasProSubscription ? 75 : 25;
+  if (earned > 0) { brainBits += earned; saveBrainBits(); updateBrainBitsUI(); }
+  return earned;
+}
+
+function applyProMultiplier(pts) {
+  if (hasProSubscription && pts > 0) return Math.round(pts * 1.5);
+  return pts;
+}
+
+updateBrainBitsUI();
+document.getElementById('top-bar-right').style.display = 'flex';
+
+function updateProPtsBadge() {
+  document.getElementById('pro-pts-badge').style.display = hasProSubscription ? 'block' : 'none';
+}
+
+// ===== PRO PROFILE SECTION =====
+function renderProSection() {
+  if (hasProSubscription) {
+    document.getElementById('pro-upload-btn').style.display = 'none';
+    document.getElementById('pro-upload-active').style.display = 'flex';
+    document.getElementById('pro-section-title').textContent = 'CUSTOM PROFILE IMAGE — PRO ACTIVE ★';
+    document.getElementById('pro-lock-icon').innerHTML = `<svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+    if (proPhotoData) {
+      document.getElementById('pro-upload-preview').classList.add('visible');
+      document.getElementById('pro-preview-img').src = proPhotoData;
+      document.getElementById('pro-upload-label').textContent = 'Change Photo';
+    } else {
+      document.getElementById('pro-upload-preview').classList.remove('visible');
+      document.getElementById('pro-upload-label').textContent = 'Upload Profile Photo';
+    }
+  } else {
+    document.getElementById('pro-upload-btn').style.display = 'flex';
+    document.getElementById('pro-upload-active').style.display = 'none';
+    document.getElementById('pro-section-title').textContent = 'CUSTOM PROFILE IMAGE — QUIZIX PRO';
+    document.getElementById('pro-lock-icon').innerHTML = `<svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" stroke="var(--neon-yellow)" stroke-width="1.8"/><path stroke="var(--neon-yellow)" stroke-width="1.8" stroke-linecap="round" d="M7 11V7a5 5 0 0110 0v4"/></svg>`;
+  }
+}
+
+// File upload handler
+document.getElementById('pro-file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { toast('Photo must be under 2MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    proPhotoData = ev.target.result;
+    localStorage.setItem('qx_pro_photo', proPhotoData);
+    document.getElementById('pro-upload-preview').classList.add('visible');
+    document.getElementById('pro-preview-img').src = proPhotoData;
+    document.getElementById('pro-upload-label').textContent = 'Change Photo';
+    renderProfilePanel();
+    toast('Profile photo updated!', 'success');
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('pro-remove-photo-btn').addEventListener('click', () => {
+  proPhotoData = null;
+  localStorage.removeItem('qx_pro_photo');
+  document.getElementById('pro-upload-preview').classList.remove('visible');
+  document.getElementById('pro-preview-img').src = '';
+  document.getElementById('pro-upload-label').textContent = 'Upload Profile Photo';
+  renderProfilePanel();
+  toast('Profile photo removed', '');
+});
+
+// ===== CANCEL PRO SUBSCRIPTION =====
+document.getElementById('pro-cancel-btn').addEventListener('click', () => {
+  if (!hasProSubscription) return;
+  if (!confirm('Cancel Quizix Pro? You will receive a 250B refund and lose Pro benefits immediately.')) return;
+  hasProSubscription = false;
+  localStorage.removeItem('qx_pro');
+  brainBits += 250;
+  saveBrainBits();
+  updateBrainBitsUI();
+  renderProSection();
+  renderProfilePanel();
+  toast('Pro cancelled. 250B refunded. Total: ' + brainBits + 'B', 'success');
+});
+
+// Show join notice if pro photo active
+function updateProJoinNotice() {
+  const notice = document.getElementById('pro-join-img-notice');
+  const preview = document.getElementById('profile-preview');
+  const avatarDisplay = document.getElementById('avatar-display');
+  if (hasProSubscription && proPhotoData) {
+    notice.style.display = 'block';
+    preview.style.background = 'transparent';
+    preview.style.border = '2px solid var(--neon-yellow)';
+    avatarDisplay.innerHTML = `<img src="${proPhotoData}" style="width:80px;height:80px;object-fit:cover;border-radius:50%;" alt="Profile" />`;
+  } else {
+    notice.style.display = 'none';
+  }
+}
+
+// ===== AVATAR SVGs =====
+const AVATAR_SVGS = [
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 15s1 1.5 3 1.5 3-1.5 3-1.5"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="11" r="1.5" fill="currentColor"/><circle cx="15" cy="11" r="1.5" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 15.5s1.2 1.5 3 1.5 3-1.5 3-1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 7.5C9 6 11 5.5 12 6M16 7.5C15 6 13 5.5 12 6"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2l2 4 5 .5-3.5 3.5 1 5L12 13l-4.5 2 1-5L5 6.5 10 6z"/><circle cx="12" cy="17" r="4" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 3C7 3 4 7 4 11c0 3 2 5 4 6l4 4 4-4c2-1 4-3 4-6 0-4-3-8-8-8z"/><circle cx="9" cy="11" r="1" fill="currentColor"/><circle cx="15" cy="11" r="1" fill="currentColor"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 14.5s1 1.5 3 1.5 3-1.5 3-1.5"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M8 15s1.5 2 4 2 4-2 4-2"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 9h.01M15 9h.01"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8.5 9.5l1-1.5M15.5 9.5l-1-1.5"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M9.5 2a4.5 4.5 0 014.5 4.5c0 .621-.126 1.213-.354 1.75A4.502 4.502 0 0117 12.5c0 1.68-.922 3.146-2.293 3.93A4.5 4.5 0 0110 21H9.5A4.5 4.5 0 015 16.5V6.5A4.5 4.5 0 019.5 2z"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 7h6M9 11h6M9 15h4"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M18 3a3 3 0 0 0-3 3l-7 3.5a3 3 0 1 0 0 5L15 18a3 3 0 1 0 .89-2.1l-7-3.5a3 3 0 0 0 0-.8l7-3.5A3 3 0 1 0 18 3z"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  `<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>`,
+];
+
+const COLORS = [
+  {bg:'rgba(0,245,255,0.15)',hex:'#00f5ff'},{bg:'rgba(191,0,255,0.15)',hex:'#bf00ff'},
+  {bg:'rgba(255,0,110,0.15)',hex:'#ff006e'},{bg:'rgba(57,255,20,0.15)',hex:'#39ff14'},
+  {bg:'rgba(255,109,0,0.15)',hex:'#ff6d00'},{bg:'rgba(255,230,0,0.15)',hex:'#ffe600'},
+  {bg:'rgba(255,255,255,0.1)',hex:'#ffffff'},
+];
+
+// ===== SIDEBAR PANELS =====
+window.showSidebarPanel = function(panel) {
+  document.querySelectorAll('.sidebar-panel').forEach(p => { p.classList.remove('panel-active'); p.style.display = 'none'; });
+  const targetPanel = document.getElementById('panel-' + panel);
+  targetPanel.classList.add('panel-active');
+  targetPanel.style.display = 'flex';
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  const btns = {'home':'sb-home-btn','profile':'sb-profile-btn','saved':'sb-saved-btn'};
+  if (btns[panel]) document.getElementById(btns[panel]).classList.add('active');
+  if (panel === 'profile') renderProfilePanel();
+  if (panel === 'saved') renderSavedQuizzes();
+};
+
+function renderProfilePanel() {
+  const name = localStorage.getItem('qx_last_name') || 'No name yet';
+  const avatarIdx = parseInt(localStorage.getItem('qx_last_avatar_idx') || '0');
+  const color = localStorage.getItem('qx_last_color') || 'rgba(0,245,255,0.15)';
+  const colorHex = localStorage.getItem('qx_last_colorhex') || '#00f5ff';
+  document.getElementById('profile-edit-name-display').textContent = name;
+  document.getElementById('profile-edit-sub-display').textContent = hasProSubscription ? '★ Quizix Pro Player' : 'Quizix Player';
+  const prev = document.getElementById('profile-edit-avatar-preview');
+  if (hasProSubscription && proPhotoData) {
+    prev.innerHTML = `<img src="${proPhotoData}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    prev.style.background = 'transparent';
+    prev.style.borderColor = 'var(--neon-yellow)';
+  } else {
+    // Render avatar with pro star badge if Pro but no photo
+    const starBadge = hasProSubscription
+      ? `<div style="position:absolute;bottom:-2px;left:-2px;width:18px;height:18px;background:var(--bg-panel);border-radius:50%;border:1px solid rgba(255,230,0,0.5);display:flex;align-items:center;justify-content:center;">
+           <svg width="10" height="10" fill="var(--neon-yellow)" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+         </div>`
+      : '';
+    prev.innerHTML = `<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">${AVATAR_SVGS[avatarIdx] || AVATAR_SVGS[0]}${starBadge}</div>`;
+    prev.style.background = color;
+    prev.style.borderColor = colorHex;
+    prev.style.color = colorHex;
+  }
+  renderProSection();
+  updateBrainBitsUI();
+}
+
+function renderSavedQuizzes() {
+  savedQuizzes = JSON.parse(localStorage.getItem('qx_saved_quizzes') || '[]');
+  const container = document.getElementById('saved-quizzes-list');
+  document.getElementById('stat-saved-quizzes').textContent = savedQuizzes.length;
+  document.getElementById('saved-count-badge').textContent = savedQuizzes.length;
+  if (savedQuizzes.length === 0) {
+    container.innerHTML = `<div class="no-saved-quizzes">
+      <div class="no-saved-icon"><svg width="40" height="40" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="no-saved-text">No saved quizzes yet.<br>Create and save one from the host panel!</div>
+      <a href="host.html" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-top:8px;">Go Host</a>
+    </div>`;
+    return;
+  }
+  container.innerHTML = '';
+  savedQuizzes.slice().reverse().forEach((quiz, i) => {
+    const card = document.createElement('div');
+    card.className = 'saved-quiz-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+    const date = quiz.savedAt ? new Date(quiz.savedAt).toLocaleDateString() : 'Saved';
+    card.innerHTML = `<div class="sqc-icon" style="color:var(--neon-cyan);"><svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/></svg></div>
+      <div class="sqc-info"><div class="sqc-title">${quiz.title || 'Untitled Quiz'}</div><div class="sqc-meta">${(quiz.questions||[]).length} questions · ${date}</div></div>
+      <span class="sqc-arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg></span>`;
+    card.addEventListener('click', () => { localStorage.setItem('qx_load_quiz', JSON.stringify(quiz)); window.location.href = 'host.html?load=1'; });
+    container.appendChild(card);
+  });
+}
+
+// Initial stats
+document.getElementById('stat-games-played').textContent = gamesPlayed;
+document.getElementById('stat-saved-quizzes').textContent = savedQuizzes.length;
+document.getElementById('saved-count-badge').textContent = savedQuizzes.length;
+
+// ===== PRO MODAL =====
+document.getElementById('pro-upload-btn').addEventListener('click', () => {
+  if (hasProSubscription) { renderProSection(); return; }
+  updateBrainBitsUI();
+  document.getElementById('pro-modal').classList.add('open');
+});
+document.getElementById('pro-modal-close').addEventListener('click', () => document.getElementById('pro-modal').classList.remove('open'));
+document.getElementById('pro-modal').addEventListener('click', e => { if (e.target === document.getElementById('pro-modal')) document.getElementById('pro-modal').classList.remove('open'); });
+document.getElementById('pro-buy-btn').addEventListener('click', () => {
+  if (brainBits < 500) { toast(`You need 500B — you have ${brainBits}B`, 'error'); return; }
+  brainBits -= 500; saveBrainBits();
+  hasProSubscription = true; localStorage.setItem('qx_pro', '1');
+  document.getElementById('pro-modal').classList.remove('open');
+  updateBrainBitsUI();
+  renderProSection();
+  toast('Quizix Pro activated! Upload your profile photo.', 'success');
+});
+
+// ===== 50 PASSWORDS =====
+const ALL_PASSWORDS = [
+  { label: 'SHADOW_KEY_7X', hint: 'Tier-1 stealth cipher' }, { label: 'FIREWALL_H4X0R', hint: 'Aggressive breach token' },
+  { label: 'GHOST_PROTO_9', hint: 'Ghost protocol passphrase' }, { label: 'NEON_VIPER_42', hint: 'Electro-serpent code' },
+  { label: 'VOID_WALKER_11', hint: 'Dark-web traversal key' }, { label: 'CRYPTO_LYNX_99', hint: 'Encrypted feline cipher' },
+  { label: 'STATIC_RAVEN_0', hint: 'Signal interference hash' }, { label: 'IRON_PHOENIX_5', hint: 'Rebirth protocol token' },
+  { label: 'BINARY_WOLF_33', hint: 'Pack algorithm sigil' }, { label: 'PULSE_DAGGER_X', hint: 'Heartbeat exploit key' },
+  { label: 'ZERO_DAY_COBRA', hint: 'Unpatched exploit chain' }, { label: 'PLASMA_HAWK_77', hint: 'Aerial breach cipher' },
+  { label: 'DARK_MATTER_8Z', hint: 'Invisible mass token' }, { label: 'QUANTUM_FOX_21', hint: 'Superposition passphrase' },
+  { label: 'NEXUS_SHARK_66', hint: 'Hub predator code' }, { label: 'TOXIC_BYTE_44X', hint: 'Payload poison hash' },
+  { label: 'LASER_MANTIS_3', hint: 'Precision strike key' }, { label: 'STORM_LEECH_90', hint: 'Parasite signal token' },
+  { label: 'VOID_CIRCUIT_2', hint: 'Empty-state bypass key' }, { label: 'RED_ORACLE_55X', hint: 'Prediction engine hash' },
+  { label: 'ICE_WRAITH_007', hint: 'Frozen stealth protocol' }, { label: 'MACH_SPIDER_18', hint: 'Speed weaver cipher' },
+  { label: 'AMBER_PULSE_61', hint: 'Warm-spectrum key' }, { label: 'NEURAL_BLADE_4', hint: 'Synapse edge token' },
+  { label: 'TURBO_GHOST_XR', hint: 'Rapid invisibility key' }, { label: 'CHROME_JACKAL_', hint: 'Metallic predator hash' },
+  { label: 'FLUX_SERPENT_7X', hint: 'Variable venom cipher' }, { label: 'DARK_PHOTON_99', hint: 'Absent-light protocol' },
+  { label: 'ZERO_KRAKEN_55', hint: 'Null sea-beast token' }, { label: 'ORBITAL_LYNX_2', hint: 'Satellite feline key' },
+  { label: 'HYPER_MOLE_66X', hint: 'Tunnel-speed cipher' }, { label: 'NOVA_STRIKER_8', hint: 'Stellar assault hash' },
+  { label: 'ACID_CIPHER_13', hint: 'Corrosive code token' }, { label: 'STEEL_PHANTOM_', hint: 'Solid ghost protocol' },
+  { label: 'WARP_FALCON_77', hint: 'Bend-space key' }, { label: 'PRISM_COBRA_44', hint: 'Refraction cipher' },
+  { label: 'APEX_WRAITH_3X', hint: 'Peak invisible token' }, { label: 'VOLT_PANTHER_0', hint: 'Electric cat hash' },
+  { label: 'SONIC_DAGGER_9', hint: 'Speed-blade cipher' }, { label: 'FROST_ORACLE_6', hint: 'Cold prediction key' },
+  { label: 'ECHO_BASILISK_', hint: 'Reflected gaze token' }, { label: 'NANO_VIPER_X55', hint: 'Micro-strike cipher' },
+  { label: 'TITAN_LEECH_44', hint: 'Giant parasite key' }, { label: 'PHANTOM_CORE_7', hint: 'Ghost center hash' },
+  { label: 'DELTA_SHARK_00', hint: 'Fourth-tier predator' }, { label: 'OMEGA_PULSE_X3', hint: 'Final heartbeat token' },
+  { label: 'HELIX_WOLF_22X', hint: 'Spiral pack cipher' }, { label: 'CIRCUIT_RAVEN_', hint: 'Wire-bird key' },
+  { label: 'BLAZING_MOLE_5', hint: 'Fire tunnel hash' }, { label: 'STYX_PHOENIX_8', hint: 'River rebirth cipher' },
+];
+function pickThreePasswords() { return [...ALL_PASSWORDS].sort(()=>Math.random()-0.5).slice(0,3); }
+
+const FOOD_TIERS = [
+  { min:0, max:999, name:'Instant Noodles', desc:'Simple but filling', bonus:50 },
+  { min:1000, max:2499, name:'Street Burger', desc:'Solid honest grub', bonus:150 },
+  { min:2500, max:4999, name:'Prime Steak', desc:"Now we're cooking", bonus:350 },
+  { min:5000, max:Infinity, name:'Lobster Thermidor', desc:'Elite cuisine', bonus:600 },
+];
+
+const DISH_SVGS = [
+  `<svg width="64" height="64" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 6 4 9 4 14a8 8 0 0016 0c0-5-4-8-8-12z"/><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" d="M12 14v4"/></svg>`,
+  `<svg width="64" height="64" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" d="M6 1v3M10 1v3M14 1v3"/></svg>`,
+  `<svg width="64" height="64" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 11l19-9-9 19-2-8-8-2z"/></svg>`,
+  `<svg width="64" height="64" fill="none" viewBox="0 0 24 24"><path stroke="var(--neon-orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 2 4 6 4 10c0 5 4 10 8 12 4-2 8-7 8-12 0-4-4-8-8-8z"/><circle cx="12" cy="10" r="3" stroke="var(--neon-orange)" stroke-width="1.5"/></svg>`,
+];
 
 const CIRCUMFERENCE = 2 * Math.PI * 35;
 
-// ===== COOKIE / LEGAL =====
-window.acceptCookies = function() {
-  localStorage.setItem('qx_cookies', '1');
-  document.getElementById('cookie-banner').classList.remove('visible');
-};
-if (!localStorage.getItem('qx_cookies')) {
-  setTimeout(() => document.getElementById('cookie-banner').classList.add('visible'), 1200);
-}
-const LEGAL = {
-  terms: `<h2>TERMS OF SERVICE</h2>
-    <p>Last updated: April 2026. Welcome to Quizix. By using this platform, you agree to these terms.</p>
-    <ul>
-      <li>Quizix is provided for educational and entertainment purposes.</li>
-      <li>You must not use Quizix to host harmful, hateful, or inappropriate content.</li>
-      <li>Game rooms are temporary and data may be cleared after sessions end.</li>
-      <li>We reserve the right to terminate access for misuse.</li>
-      <li>Quizix is not liable for loss of data or quiz results.</li>
-    </ul>`,
-  privacy: `<h2>PRIVACY POLICY</h2>
-    <p>Last updated: April 2026.</p>
-    <ul>
-      <li><strong>Data collected:</strong> Callsigns, scores, and answers during game sessions only.</li>
-      <li><strong>Storage:</strong> Temporary in Firebase; removed after game ends.</li>
-      <li><strong>No accounts:</strong> No email or account required.</li>
-      <li><strong>Third parties:</strong> Google Firebase for real-time infrastructure.</li>
-      <li><strong>Children:</strong> Suitable for all ages; no personal data of minors knowingly collected.</li>
-    </ul>`,
-  cookies: `<h2>COOKIE POLICY</h2>
-    <p>Last updated: April 2026.</p>
-    <ul>
-      <li><strong>Session cookies:</strong> Maintain your game session.</li>
-      <li><strong>Preference cookies:</strong> Remember cookie acceptance.</li>
-      <li><strong>Firebase cookies:</strong> For database connection management.</li>
-    </ul>
-    <p>No advertising or tracking cookies. You can clear cookies via browser settings.</p>`
-};
-window.openLegal = function(type) {
-  document.getElementById('legal-content').innerHTML = LEGAL[type];
-  document.getElementById('legal-modal').classList.add('open');
-};
-window.closeLegal = function() { document.getElementById('legal-modal').classList.remove('open'); };
-document.getElementById('legal-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('legal-modal')) closeLegal();
+// ===== THEME =====
+const savedTheme = localStorage.getItem('qx_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+updateThemeBtn(savedTheme);
+document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('qx_theme', next);
+  updateThemeBtn(next);
 });
+function updateThemeBtn(theme) {
+  const iconEl = document.getElementById('theme-icon');
+  if (theme === 'dark') {
+    iconEl.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`;
+    document.getElementById('theme-label').textContent = 'DARK';
+  } else {
+    iconEl.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
+    document.getElementById('theme-label').textContent = 'LIGHT';
+  }
+}
+
+// ===== MATRIX RAIN =====
+function startMatrixRain() {
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const cols = Math.floor(canvas.width / 14);
+  const drops = Array(cols).fill(1);
+  const chars = 'アイウエオ0123456789ABCDEF><|!@#$%^&';
+  function draw() {
+    ctx.fillStyle = 'rgba(0,5,0,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.font = '12px Courier New';
+    drops.forEach((y,i) => {
+      ctx.fillStyle = Math.random()>0.95?'#ffffff':'#00ff41';
+      ctx.globalAlpha = Math.random()*0.5+0.2;
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, y*14);
+      ctx.globalAlpha=1;
+      if(y*14>canvas.height&&Math.random()>0.975) drops[i]=0;
+      drops[i]++;
+    });
+  }
+  setInterval(draw, 50); canvas.classList.add('visible');
+}
+
+// ===== COOKIE / LEGAL =====
+window.acceptCookies = function() { localStorage.setItem('qx_cookies','1'); document.getElementById('cookie-banner').classList.remove('visible'); };
+if (!localStorage.getItem('qx_cookies')) setTimeout(()=>document.getElementById('cookie-banner').classList.add('visible'),1200);
+const LEGAL = {
+  terms: `<h2>TERMS OF SERVICE</h2><p>Last updated: April 2026.</p><ul><li>For educational and entertainment purposes only.</li><li>Do not use harmful content.</li><li>Game data is cleared after sessions.</li></ul>`,
+  privacy: `<h2>PRIVACY POLICY</h2><p>Last updated: April 2026.</p><ul><li>Callsigns, scores, and answers are session-only.</li><li>Data stored temporarily in Firebase.</li></ul>`,
+  cookies: `<h2>COOKIE POLICY</h2><p>Last updated: April 2026.</p><ul><li>Session and preference cookies only.</li><li>No advertising cookies.</li></ul>`
+};
+window.openLegal = function(type) { document.getElementById('legal-content').innerHTML = LEGAL[type]; document.getElementById('legal-modal').classList.add('open'); };
+window.closeLegal = function() { document.getElementById('legal-modal').classList.remove('open'); };
+document.getElementById('legal-modal').addEventListener('click', e => { if(e.target===document.getElementById('legal-modal')) closeLegal(); });
 
 // ===== PROFILE MAKER =====
-const AVATARS = ['👾','🤖','🦊','🐉','⚡','🔥','💀','🎯','🦁','🚀','🌙','⭐','🎮','🧠','🦋'];
-const COLORS = [
-  { bg: 'rgba(0,245,255,0.15)', hex: '#00f5ff' },
-  { bg: 'rgba(191,0,255,0.15)', hex: '#bf00ff' },
-  { bg: 'rgba(255,0,110,0.15)', hex: '#ff006e' },
-  { bg: 'rgba(57,255,20,0.15)', hex: '#39ff14' },
-  { bg: 'rgba(255,109,0,0.15)', hex: '#ff6d00' },
-  { bg: 'rgba(255,230,0,0.15)', hex: '#ffe600' },
-  { bg: 'rgba(255,255,255,0.1)', hex: '#ffffff' },
-];
+let selectedAvatarIdx = 0;
 
-const avatarPicker = document.getElementById('avatar-picker');
-const colorPicker = document.getElementById('color-picker');
-AVATARS.forEach((a, i) => {
-  const el = document.createElement('div');
-  el.className = 'avatar-option' + (i === 0 ? ' selected' : '');
-  el.textContent = a; el.style.fontSize = '1.4rem';
-  el.addEventListener('click', () => {
-    document.querySelectorAll('.avatar-option').forEach(x => x.classList.remove('selected'));
-    el.classList.add('selected'); selectedAvatar = a; updatePreview();
+function buildAvatarPicker() {
+  const avatarPicker = document.getElementById('avatar-picker');
+  const colorPicker = document.getElementById('color-picker');
+  avatarPicker.innerHTML = ''; colorPicker.innerHTML = '';
+  AVATAR_SVGS.forEach((svg, i) => {
+    const el = document.createElement('div');
+    el.className = 'avatar-option' + (i===0?' selected':'');
+    el.innerHTML = svg;
+    el.style.color = selectedColorHex;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-option').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedAvatarIdx = i;
+      selectedAvatar = 'avatar_' + i;
+      updatePreview();
+    });
+    avatarPicker.appendChild(el);
   });
-  avatarPicker.appendChild(el);
-});
-COLORS.forEach((c, i) => {
-  const el = document.createElement('div');
-  el.className = 'color-dot' + (i === 0 ? ' selected' : '');
-  el.style.background = c.hex;
-  el.addEventListener('click', () => {
-    document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('selected'));
-    el.classList.add('selected'); selectedColor = c.bg; selectedColorHex = c.hex; updatePreview();
+  COLORS.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'color-dot' + (i===0?' selected':'');
+    el.style.background = c.hex;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.color-dot').forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedColor=c.bg; selectedColorHex=c.hex;
+      document.querySelectorAll('.avatar-option').forEach(o=>o.style.color=c.hex);
+      updatePreview();
+    });
+    colorPicker.appendChild(el);
   });
-  colorPicker.appendChild(el);
-});
+  updatePreview();
+  updateProJoinNotice();
+}
+
 function updatePreview() {
   const prev = document.getElementById('profile-preview');
-  prev.style.background = selectedColor; prev.style.borderColor = selectedColorHex;
-  prev.style.boxShadow = `0 0 20px ${selectedColorHex}44`;
-  document.getElementById('avatar-display').textContent = selectedAvatar;
+  if (hasProSubscription && proPhotoData) return;
+  prev.style.background=selectedColor; prev.style.borderColor=selectedColorHex;
+  prev.style.color = selectedColorHex;
+  // Add pro star if Pro but no photo
+  const proStar = hasProSubscription
+    ? `<div style="position:absolute;bottom:-4px;left:-4px;width:18px;height:18px;background:var(--bg-panel);border-radius:50%;border:1px solid rgba(255,230,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1;">
+         <svg width="10" height="10" fill="var(--neon-yellow)" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+       </div>`
+    : '';
+  document.getElementById('avatar-display').innerHTML = `<div style="position:relative;display:inline-flex;">${AVATAR_SVGS[selectedAvatarIdx]}${proStar}</div>`;
 }
 
 // ===== STEP NAV =====
@@ -441,356 +1286,495 @@ function goStep(n) {
 document.getElementById('btn-next-step').addEventListener('click', () => {
   const pin = document.getElementById('input-pin').value.trim();
   const name = document.getElementById('input-name').value.trim();
-  if (!pin || pin.length < 4) { toast('Enter a valid game PIN', 'error'); return; }
-  if (!name) { toast('Enter your callsign', 'error'); return; }
+  if (!pin || pin.length < 4) { toast('Enter a valid game PIN','error'); return; }
+  if (!name) { toast('Enter your name','error'); return; }
+  buildAvatarPicker();
   goStep(1);
 });
 document.getElementById('btn-back-0').addEventListener('click', () => goStep(0));
-document.getElementById('input-pin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,6); });
-document.getElementById('input-pin').addEventListener('keydown', e => e.key === 'Enter' && document.getElementById('input-name').focus());
-document.getElementById('input-name').addEventListener('keydown', e => e.key === 'Enter' && document.getElementById('btn-next-step').click());
+document.getElementById('input-pin').addEventListener('input', e => { e.target.value=e.target.value.replace(/\D/g,'').slice(0,6); });
+document.getElementById('input-pin').addEventListener('keydown', e => e.key==='Enter'&&document.getElementById('input-name').focus());
+document.getElementById('input-name').addEventListener('keydown', e => e.key==='Enter'&&document.getElementById('btn-next-step').click());
 
 // ===== UTILS =====
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 function toast(msg, type='') {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'toast show' + (type ? ' '+type : '');
-  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2800);
+  el.textContent=msg; el.className='toast show'+(type?' '+type:'');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
 
 // ===== SVG ICONS =====
-const SVG_CORRECT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#39ff14" stroke-width="1.5" fill="rgba(57,255,20,0.1)"/><path stroke="#39ff14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.5 3.5L17 9" filter="drop-shadow(0 0 6px #39ff14)"/></svg>`;
-const SVG_WRONG = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff006e" stroke-width="1.5" fill="rgba(255,0,110,0.1)"/><path stroke="#ff006e" stroke-width="2.5" stroke-linecap="round" d="M9 9l6 6M15 9l-6 6" filter="drop-shadow(0 0 6px #ff006e)"/></svg>`;
-const SVG_TIMEOUT = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.1)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3"/></svg>`;
-const SVG_POLL = `<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.08)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6m6 0h6m-6 0H3m6 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0h4a2 2 0 002-2v-3a2 2 0 00-2-2h-4"/></svg>`;
-
-function trophySVG(rank) {
-  if (rank === 1) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(255,230,0,0.1)"/></svg>`;
-  if (rank === 2) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#c0c0d0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(192,192,208,0.08)"/></svg>`;
-  if (rank === 3) return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#cd8040" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(205,128,64,0.08)"/></svg>`;
-  return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
-}
-
-const MEDAL_SVG = [
+const SVG_CORRECT=`<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#39ff14" stroke-width="1.5" fill="rgba(57,255,20,0.1)"/><path stroke="#39ff14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.5 3.5L17 9"/></svg>`;
+const SVG_WRONG=`<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff006e" stroke-width="1.5" fill="rgba(255,0,110,0.1)"/><path stroke="#ff006e" stroke-width="2.5" stroke-linecap="round" d="M9 9l6 6M15 9l-6 6"/></svg>`;
+const SVG_TIMEOUT=`<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.1)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3"/></svg>`;
+const SVG_POLL=`<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#ff6d00" stroke-width="1.5" fill="rgba(255,109,0,0.08)"/><path stroke="#ff6d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M18 20V10M12 20V4M6 20v-6"/></svg>`;
+const MEDAL_SVG=[
   `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#ffe600" stroke-width="1.5" fill="rgba(255,230,0,0.15)"/><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
   `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#c0c0d0" stroke-width="1.5" fill="rgba(192,192,208,0.1)"/><path stroke="#c0c0d0" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
   `<svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" stroke="#cd8040" stroke-width="1.5" fill="rgba(205,128,64,0.1)"/><path stroke="#cd8040" stroke-width="1.5" stroke-linecap="round" d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>`,
 ];
+function trophySVG(rank) {
+  const c=rank===1?'#ffe600':rank===2?'#c0c0d0':rank===3?'#cd8040':'var(--text-muted)';
+  return `<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="${c}22"/></svg>`;
+}
+
+// ===== PRO STAR BADGE HELPER =====
+// Inline SVG star badge for leaderboard/player rows (Pro users without photo)
+const PRO_STAR_BADGE_SVG = `<div style="position:absolute;bottom:-2px;left:-2px;width:14px;height:14px;background:var(--bg-card);border-radius:50%;border:1px solid rgba(255,230,0,0.4);display:flex;align-items:center;justify-content:center;">
+  <svg width="8" height="8" fill="var(--neon-yellow)" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+</div>`;
+
+// Render leaderboard avatar — now correctly resolves pro photo
+function renderLbAvatar(p, isSelf = false) {
+  // Self: use local proPhotoData if pro; others: use proPhoto field from Firebase
+  const photoSrc = isSelf && hasProSubscription && proPhotoData
+    ? proPhotoData
+    : (p.proPhoto && p.proPhoto !== '__local__' ? p.proPhoto : null);
+
+  if (photoSrc) {
+    return `<img class="lb-avatar-img" src="${photoSrc}" alt="${p.name}" onerror="this.style.display='none'" />`;
+  }
+  // No photo: show avatar + pro star badge if isPro
+  const color = p.color || 'rgba(0,245,255,0.15)';
+  const hex = p.colorHex || '#00f5ff';
+  const avatarContent = p.avatar || (p.name ? `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="${hex}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle stroke="${hex}" stroke-width="1.8" cx="12" cy="7" r="4"/></svg>` : '');
+  const starBadge = p.isPro ? PRO_STAR_BADGE_SVG : '';
+  return `<div class="lb-avatar" style="background:${color};color:${hex};position:relative;">${avatarContent}${starBadge}</div>`;
+}
+
+// ===== HACK CUTSCENE =====
+function runHackCutscene(name, onComplete) {
+  const cs = document.getElementById('screen-cutscene');
+  cs.classList.add('active');
+  document.getElementById('cs-line-name').textContent=name.toUpperCase();
+  const lines=['cs-line-0','cs-line-1','cs-line-2','cs-line-3','cs-line-name','cs-line-4'];
+  const delays=[200,700,1400,2000,2600,3200];
+  lines.forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('visible'),delays[i]));
+  const progress=document.getElementById('cs-progress');
+  const fill=document.getElementById('cs-progress-fill');
+  setTimeout(()=>{ progress.classList.add('visible'); requestAnimationFrame(()=>requestAnimationFrame(()=>{ fill.style.width='100%'; })); },3800);
+  setTimeout(()=>{ cs.classList.remove('active'); lines.forEach(id=>document.getElementById(id).classList.remove('visible')); progress.classList.remove('visible'); fill.style.width='0%'; onComplete(); },6500);
+}
+
+// ===== PASSWORD SELECTION =====
+function showPasswordPicker(onPicked) {
+  const screen=document.getElementById('screen-password');
+  screen.classList.add('active');
+  const grid=document.getElementById('password-grid');
+  grid.innerHTML='';
+  const choices=pickThreePasswords();
+  choices.forEach(p=>{
+    const btn=document.createElement('button');
+    btn.className='password-btn';
+    btn.innerHTML=`<span class="pass-key-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="#00ff41" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span><div><div style="font-weight:700;">${p.label}</div><div style="font-size:0.75rem;color:rgba(0,255,65,0.4);margin-top:2px;">${p.hint}</div></div><span style="font-size:0.65rem;letter-spacing:0.15em;color:rgba(0,255,65,0.3);font-family:'Courier New',monospace;margin-left:auto;">SELECT</span>`;
+    btn.addEventListener('click',()=>{ myPassword=p.label; screen.classList.remove('active'); onPicked(p.label); });
+    grid.appendChild(btn);
+  });
+}
+
+// ===== COOK INTRO =====
+function showCookIntro(name, onContinue) {
+  const screen=document.getElementById('screen-cook-intro');
+  document.getElementById('cook-intro-name').textContent=`CHEF ${name.toUpperCase()}`;
+  screen.classList.add('active');
+  document.getElementById('cook-intro-continue').onclick=()=>{ screen.classList.remove('active'); onContinue(); };
+}
+
+// ===== HACK MINI-GAME =====
+function showHackMinigame(targetName, targetPassword, onContinue) {
+  const screen=document.getElementById('screen-hack-minigame');
+  const resultBanner=document.getElementById('hack-result-banner');
+  const continueBtn=document.getElementById('hack-continue-btn');
+  resultBanner.className='hack-result-banner'; continueBtn.className='hack-continue-btn';
+  document.getElementById('hack-target-name').textContent=targetName.toUpperCase();
+  document.getElementById('hack-pass-victim').textContent=targetName;
+  ['hlog-1','hlog-2','hlog-3','hlog-4','hlog-5'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+  document.getElementById('fw-status-text').textContent='ACTIVE';
+  document.getElementById('fw-status-text').style.color='#ffaa00';
+  document.getElementById('fw-bar').style.background='linear-gradient(90deg,#00ff41,#ffaa00,#ff4444)';
+  const choicesEl=document.getElementById('hack-pass-choices');
+  choicesEl.innerHTML='';
+  screen.classList.add('active');
+  const logs=['hlog-1','hlog-2','hlog-3','hlog-4','hlog-5'];
+  logs.forEach((id,i)=>setTimeout(()=>document.getElementById(id).classList.add('visible'),300+i*400));
+  const others=ALL_PASSWORDS.filter(p=>p.label!==targetPassword);
+  const fakes=others.sort(()=>Math.random()-0.5).slice(0,2).map(p=>p.label);
+  const allChoices=[targetPassword,...fakes].sort(()=>Math.random()-0.5);
+  setTimeout(()=>{
+    allChoices.forEach((pass,i)=>{
+      const btn=document.createElement('button');
+      btn.className='hack-pass-btn';
+      btn.innerHTML=`<span class="hack-pass-num">[${String.fromCharCode(65+i)}]</span>${pass}`;
+      btn.addEventListener('click',()=>{
+        const guessedCorrect=pass===targetPassword;
+        document.querySelectorAll('.hack-pass-btn').forEach(b=>{ b.disabled=true; if(b.textContent.includes(targetPassword))b.classList.add('hacked'); else if(b===btn&&!guessedCorrect)b.classList.add('wrong-pass'); });
+        document.getElementById('fw-bar').style.background=guessedCorrect?'#00ff41':'#ff4444';
+        document.getElementById('fw-status-text').textContent=guessedCorrect?'BREACHED':'BLOCKED';
+        document.getElementById('fw-status-text').style.color=guessedCorrect?'#00ff41':'#ff4444';
+        resultBanner.classList.add('visible');
+        if(guessedCorrect){resultBanner.classList.add('success');document.getElementById('hack-result-title').textContent='ACCESS GRANTED';document.getElementById('hack-result-sub').textContent='// FIREWALL SUCCESSFULLY BREACHED';document.getElementById('hack-result-pts').textContent=`+250 pts stolen from ${targetName}`;}
+        else{resultBanner.classList.add('fail');document.getElementById('hack-result-title').textContent='ACCESS DENIED';document.getElementById('hack-result-sub').textContent='// WRONG PASSWORD — BLOCKED';document.getElementById('hack-result-pts').textContent='No pts stolen';}
+        continueBtn.classList.add('visible');
+      });
+      choicesEl.appendChild(btn);
+    });
+  }, logs.length*400+500);
+  continueBtn.onclick=()=>{ screen.classList.remove('active'); onContinue(); };
+}
 
 // ===== JOIN =====
 document.getElementById('btn-join').addEventListener('click', joinGame);
-
 async function joinGame() {
-  const pin = document.getElementById('input-pin').value.trim();
-  const name = document.getElementById('input-name').value.trim();
-  const roomSnap = await get(ref(db, `rooms/${pin}`));
-  if (!roomSnap.exists()) { toast('Room not found. Check the PIN.', 'error'); goStep(0); return; }
-  const room = roomSnap.val();
-  if (room.status === 'final') { toast('This game has ended.', 'error'); return; }
-  const players = room.players || {};
-  if (Object.values(players).some(p => p.name.toLowerCase() === name.toLowerCase())) {
-    toast('That name is taken. Choose another.', 'error'); goStep(0); return;
-  }
-  roomCode = pin; playerName = name;
-  playerId = 'p_' + Math.random().toString(36).slice(2, 10);
-  await set(ref(db, `rooms/${roomCode}/players/${playerId}`), {
-    name: playerName, score: 0, answers: {}, joinedAt: Date.now(),
-    avatar: selectedAvatar, color: selectedColor, colorHex: selectedColorHex
+  const pin=document.getElementById('input-pin').value.trim();
+  const name=document.getElementById('input-name').value.trim();
+  const roomSnap=await get(ref(db,`rooms/${pin}`));
+  if(!roomSnap.exists()){toast('Room not found. Check the PIN.','error');goStep(0);return;}
+  const room=roomSnap.val();
+  if(room.status==='final'){toast('This game has ended.','error');return;}
+  const players=room.players||{};
+  if(Object.values(players).some(p=>p.name.toLowerCase()===name.toLowerCase())){toast('That name is taken.','error');goStep(0);return;}
+
+  gameMode = room.gameMode || 'normal';
+  roomCode=pin; playerName=name;
+  playerId='p_'+Math.random().toString(36).slice(2,10);
+  totalQuestions = room.quiz?.questions?.length || 0;
+
+  localStorage.setItem('qx_last_name', name);
+  localStorage.setItem('qx_last_avatar_idx', selectedAvatarIdx);
+  localStorage.setItem('qx_last_color', selectedColor);
+  localStorage.setItem('qx_last_colorhex', selectedColorHex);
+
+  // ===== FIX: Send actual base64 photo data to Firebase so host panel can display it =====
+  // Pro photo: send the full base64 data (up to ~2MB) so other clients including host can render it
+  const proPhotoToSend = hasProSubscription && proPhotoData ? proPhotoData : null;
+  const avatarToSend = hasProSubscription && proPhotoData ? null : AVATAR_SVGS[selectedAvatarIdx];
+
+  await set(ref(db,`rooms/${roomCode}/players/${playerId}`),{
+    name:playerName, score:0, answers:{}, joinedAt:Date.now(),
+    avatar: avatarToSend,
+    avatarIdx:selectedAvatarIdx,
+    color:selectedColor, colorHex:selectedColorHex,
+    gameMode,
+    password: myPassword||null,
+    isPro: hasProSubscription,
+    // Send actual photo data so host panel and all leaderboards can show it
+    proPhoto: proPhotoToSend
   });
-  document.getElementById('player-welcome-name').textContent = playerName;
-  document.getElementById('lobby-room-pin').textContent = roomCode;
-  const lobbyPrev = document.getElementById('lobby-avatar-preview');
-  lobbyPrev.style.background = selectedColor; lobbyPrev.style.borderColor = selectedColorHex;
-  lobbyPrev.style.boxShadow = `0 0 20px ${selectedColorHex}44`;
-  lobbyPrev.innerHTML = `<span style="font-size:1.8rem">${selectedAvatar}</span>`;
-  showScreen('screen-lobby-player');
-  startRoomListener();
+
+  if(gameMode==='hack'){document.body.classList.add('hack-mode-active');document.getElementById('scan-glitch').style.display='block';startMatrixRain();}
+  else if(gameMode==='cook'){document.body.classList.add('cook-mode-active');}
+
+  // Lobby avatar preview
+  const lobbyPrev=document.getElementById('lobby-avatar-preview');
+  lobbyPrev.style.background=selectedColor; lobbyPrev.style.borderColor=selectedColorHex;
+  lobbyPrev.style.color=selectedColorHex;
+  if (hasProSubscription && proPhotoData) {
+    lobbyPrev.innerHTML=`<img src="${proPhotoData}" style="width:64px;height:64px;object-fit:cover;border-radius:50%;" />`;
+    lobbyPrev.style.background='transparent';
+    lobbyPrev.style.border='2px solid var(--neon-yellow)';
+  } else {
+    lobbyPrev.innerHTML=AVATAR_SVGS[selectedAvatarIdx];
+  }
+
+  document.getElementById('player-welcome-name').textContent=playerName;
+  document.getElementById('lobby-room-pin').textContent=roomCode;
+  applyModeText();
+  updateProPtsBadge();
+
+  if(gameMode==='hack'){
+    runHackCutscene(playerName,()=>{
+      showPasswordPicker(chosenPass=>{
+        myPassword=chosenPass;
+        update(ref(db,`rooms/${roomCode}/players/${playerId}`),{password:myPassword});
+        showScreen('screen-lobby-player');
+        startRoomListener();
+      });
+    });
+  } else if(gameMode==='cook'){
+    showCookIntro(playerName,()=>{showScreen('screen-lobby-player');startRoomListener();});
+  } else {
+    showScreen('screen-lobby-player');
+    startRoomListener();
+  }
+}
+
+function applyModeText() {
+  if(gameMode==='hack'){
+    document.getElementById('lobby-section-title').textContent='SECURE CHANNEL';
+    document.getElementById('lobby-wait-text').textContent='// Connected. Awaiting operation start...';
+    document.getElementById('score-label').textContent='BREACH PTS';
+    document.getElementById('answered-label').textContent='TRANSMITTED';
+    document.getElementById('waiting-lb-text').textContent='// Uploading data to server...';
+    document.getElementById('final-title').textContent='OPERATION COMPLETE';
+    document.getElementById('lb-section-title').textContent='[ RANKINGS ]';
+  } else if(gameMode==='cook'){
+    document.getElementById('lobby-section-title').textContent='KITCHEN LOBBY';
+    document.getElementById('lobby-wait-text').textContent='Prepping ingredients. Await the head chef.';
+    document.getElementById('lobby-players-label').textContent='Chefs Ready';
+    document.getElementById('score-label').textContent='KITCHEN PTS';
+    document.getElementById('answered-label').textContent='PLATED';
+    document.getElementById('waiting-lb-text').textContent='Waiting for next course...';
+    document.getElementById('final-title').textContent='SERVICE COMPLETE';
+  }
 }
 
 // ===== ROOM LISTENER =====
 function startRoomListener() {
-  if (unsubRoom) unsubRoom();
-  unsubRoom = onValue(ref(db, `rooms/${roomCode}`), snap => {
-    if (!snap.exists()) return;
-    const room = snap.val();
-    const players = room.players || {};
-    document.getElementById('lobby-player-count').textContent = Object.keys(players).length;
-    if (room.quiz) document.getElementById('lobby-q-count').textContent = room.quiz.questions?.length || 0;
-
-    if (room.status === 'question') {
-      const qi = room.currentQuestion || 0;
-      if (qi !== lastQuestionIndex) {
-        lastQuestionIndex = qi; hasAnswered = false; currentAnswerIndex = null; multiSelected = new Set();
-        clearTimer(); showQuestion(room, qi);
-      }
-    } else if (room.status === 'leaderboard') {
+  if(unsubRoom) unsubRoom();
+  unsubRoom=onValue(ref(db,`rooms/${roomCode}`),snap=>{
+    if(!snap.exists()) return;
+    const room=snap.val();
+    const players=room.players||{};
+    document.getElementById('lobby-player-count').textContent=Object.keys(players).length;
+    if(room.quiz) document.getElementById('lobby-q-count').textContent=room.quiz.questions?.length||0;
+    if(room.status==='question'){
+      const qi=room.currentQuestion||0;
+      if(qi!==lastQuestionIndex){lastQuestionIndex=qi;hasAnswered=false;currentAnswerIndex=null;multiSelected=new Set();clearTimer();showQuestion(room,qi);}
+    } else if(room.status==='leaderboard'){
       showLeaderboard(players);
-    } else if (room.status === 'final') {
-      showFinal(players, room);
+    } else if(room.status==='final'){
+      showFinal(players,room);
     }
-
-    if (players[playerId]) {
-      myScore = players[playerId].score || 0;
-      document.getElementById('my-score-display').textContent = myScore.toLocaleString();
+    if(players[playerId]){myScore=players[playerId].score||0;document.getElementById('my-score-display').textContent=myScore.toLocaleString();}
+    // Cook mode: dish served
+    if(gameMode==='cook'&&room.cookDish&&room.cookDish.questionIndex===lastQuestionIndex&&room.cookDish.served&&!room.cookDish[`claimed_${playerId}`]){
+      const dish=room.cookDish;
+      const tier=FOOD_TIERS.find(t=>t.name===dish.name)||FOOD_TIERS[0];
+      const tierIdx=FOOD_TIERS.indexOf(tier);
+      update(ref(db,`rooms/${roomCode}/cookDish`),{[`claimed_${playerId}`]:true});
+      update(ref(db,`rooms/${roomCode}/players/${playerId}`),{score:myScore+tier.bonus});
+      document.getElementById('cook-dish-icon').innerHTML = DISH_SVGS[tierIdx] || DISH_SVGS[0];
+      document.getElementById('cook-dish-name').textContent=dish.name;
+      document.getElementById('cook-dish-desc').textContent=dish.desc;
+      document.getElementById('cook-bonus-pts').textContent=`+${tier.bonus} pts — served by the chef!`;
+      document.getElementById('screen-cook-bonus').classList.add('active');
+      setTimeout(()=>document.getElementById('screen-cook-bonus').classList.remove('active'),3500);
     }
   });
 }
 
 // ===== SHOW QUESTION =====
-function showQuestion(room, qi) {
-  const q = room.quiz.questions[qi];
-  if (!q) return;
-  currentQType = q.qtype || 'mc';
-
-  document.getElementById('question-text').textContent = q.question;
-  document.getElementById('q-number-label').textContent = `Question ${qi+1} of ${room.quiz.questions.length}`;
-  document.getElementById('hud-qnum').textContent = `Q${qi+1}`;
-  document.getElementById('answered-badge').style.display = 'none';
-  document.getElementById('progress-bar').style.width = (qi / room.quiz.questions.length * 100) + '%';
-
-  // Image
-  const imgWrap = document.getElementById('q-image-wrap');
-  const imgEl = document.getElementById('q-image');
-  if (q.image) { imgEl.src = q.image; imgWrap.style.display = 'block'; }
-  else { imgWrap.style.display = 'none'; imgEl.src = ''; }
-
-  // Mode hints
-  document.getElementById('multi-hint').style.display = currentQType === 'multi' ? 'block' : 'none';
-  document.getElementById('poll-hint').style.display = currentQType === 'poll' ? 'block' : 'none';
-  document.getElementById('multi-submit-wrap').style.display = currentQType === 'multi' ? 'flex' : 'none';
-
-  // Timer visibility
-  const timerWrap = document.getElementById('timer-wrap-el');
-  timerWrap.style.display = currentQType === 'slide' ? 'none' : 'flex';
-
-  // Info slide
-  document.getElementById('slide-continue-wrap').style.display = currentQType === 'slide' ? 'flex' : 'none';
-  document.getElementById('answer-grid').style.display = currentQType === 'slide' ? 'none' : 'grid';
-
-  // Choices
-  if (currentQType !== 'slide') {
-    document.querySelectorAll('.answer-btn').forEach((btn, i) => {
-      btn.querySelector('.answer-text').textContent = q.choices[i] || '';
-      btn.className = 'answer-btn'; btn.disabled = false;
-    });
+function showQuestion(room,qi) {
+  const q=room.quiz.questions[qi]; if(!q) return;
+  currentQType=q.qtype||'mc';
+  document.getElementById('question-text').textContent=q.question;
+  document.getElementById('q-number-label').textContent=`Question ${qi+1} of ${room.quiz.questions.length}`;
+  document.getElementById('hud-qnum').textContent=`Q${qi+1}`;
+  document.getElementById('answered-badge').style.display='none';
+  document.getElementById('progress-bar').style.width=(qi/room.quiz.questions.length*100)+'%';
+  const imgWrap=document.getElementById('q-image-wrap');
+  if(q.image){document.getElementById('q-image').src=q.image;imgWrap.style.display='block';}else{imgWrap.style.display='none';}
+  document.getElementById('multi-hint').style.display=currentQType==='multi'?'block':'none';
+  document.getElementById('poll-hint').style.display=currentQType==='poll'?'block':'none';
+  document.getElementById('multi-submit-wrap').style.display=currentQType==='multi'?'flex':'none';
+  document.getElementById('timer-wrap-el').style.display=currentQType==='slide'?'none':'flex';
+  document.getElementById('slide-continue-wrap').style.display=currentQType==='slide'?'flex':'none';
+  document.getElementById('answer-grid').style.display=currentQType==='slide'?'none':'grid';
+  if(currentQType!=='slide'){
+    document.querySelectorAll('.answer-btn').forEach((btn,i)=>{btn.querySelector('.answer-text').textContent=q.choices[i]||'';btn.className='answer-btn';btn.disabled=false;});
   }
-
   showScreen('screen-question');
-  if (currentQType !== 'slide') startTimer(q.timeLimit || 20, room.questionStartTime, qi);
+  updateProPtsBadge();
+  if(currentQType!=='slide') startTimer(q.timeLimit||20,room.questionStartTime,qi);
 }
 
 // ===== TIMER =====
-function startTimer(totalSecs, startTime, qi) {
+function startTimer(totalSecs,startTime,qi) {
   clearTimer();
-  const ring = document.getElementById('timer-ring');
-  const progress = document.getElementById('ring-progress');
-  const display = document.getElementById('timer-display');
-  progress.style.strokeDasharray = CIRCUMFERENCE;
-  const tick = () => {
-    const elapsed = (Date.now() - startTime) / 1000;
-    const remaining = Math.max(0, totalSecs - elapsed);
-    const frac = remaining / totalSecs;
-    display.textContent = Math.ceil(remaining);
-    progress.style.strokeDashoffset = CIRCUMFERENCE * (1 - frac);
-    ring.className = 'timer-ring';
-    if (remaining <= 5) ring.classList.add('danger');
-    else if (remaining <= 10) ring.classList.add('warning');
-    if (remaining <= 0) { clearTimer(); if (!hasAnswered) revealAnswer(qi, -1); }
+  const ring=document.getElementById('timer-ring');
+  const progress=document.getElementById('ring-progress');
+  const display=document.getElementById('timer-display');
+  progress.style.strokeDasharray=CIRCUMFERENCE;
+  const tick=()=>{
+    const elapsed=(Date.now()-startTime)/1000;
+    const remaining=Math.max(0,totalSecs-elapsed);
+    const frac=remaining/totalSecs;
+    display.textContent=Math.ceil(remaining);
+    progress.style.strokeDashoffset=CIRCUMFERENCE*(1-frac);
+    ring.className='timer-ring';
+    if(remaining<=5) ring.classList.add('danger'); else if(remaining<=10) ring.classList.add('warning');
+    if(remaining<=0){clearTimer();if(!hasAnswered) revealAnswer(qi,-1);}
   };
-  tick(); timerInterval = setInterval(tick, 200);
+  tick(); timerInterval=setInterval(tick,200);
 }
-function clearTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+function clearTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
 
-// ===== ANSWER SELECTION =====
-document.querySelectorAll('.answer-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    if (hasAnswered) return;
-    const qi = lastQuestionIndex;
-    const choice = parseInt(btn.dataset.choice);
-
-    if (currentQType === 'multi') {
-      // Toggle selection
-      if (multiSelected.has(choice)) {
-        multiSelected.delete(choice);
-        btn.classList.remove('multi-selected');
-      } else {
-        multiSelected.add(choice);
-        btn.classList.add('multi-selected');
-      }
+// ===== ANSWER HANDLING =====
+document.querySelectorAll('.answer-btn').forEach(btn=>{
+  btn.addEventListener('click',async()=>{
+    if(hasAnswered) return;
+    const qi=lastQuestionIndex,choice=parseInt(btn.dataset.choice);
+    if(currentQType==='multi'){
+      if(multiSelected.has(choice)){multiSelected.delete(choice);btn.classList.remove('multi-selected');}
+      else{multiSelected.add(choice);btn.classList.add('multi-selected');}
       return;
     }
-
-    // Single answer (mc or poll)
-    hasAnswered = true; currentAnswerIndex = choice;
-    document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+    hasAnswered=true; currentAnswerIndex=choice;
+    document.querySelectorAll('.answer-btn').forEach(b=>b.disabled=true);
     btn.classList.add('selected');
-    document.getElementById('answered-badge').style.display = 'flex';
-    await submitSingleAnswer(qi, choice);
+    document.getElementById('answered-badge').style.display='flex';
+    await submitSingleAnswer(qi,choice);
   });
 });
 
-// Multi-answer submit
-document.getElementById('btn-multi-submit').addEventListener('click', async () => {
-  if (hasAnswered || multiSelected.size === 0) {
-    if (multiSelected.size === 0) toast('Select at least one answer', 'error');
-    return;
-  }
-  hasAnswered = true;
-  document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
-  document.getElementById('answered-badge').style.display = 'flex';
-  document.getElementById('btn-multi-submit').disabled = true;
-  const qi = lastQuestionIndex;
-
-  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
-  const room = roomSnap.val();
-  const elapsed = (Date.now() - room.questionStartTime) / 1000;
-  const timeLimit = room.quiz.questions[qi].timeLimit || 20;
-  const correctArr = room.quiz.questions[qi].correct || [];
-  const selectedArr = [...multiSelected];
-
-  const isCorrect = correctArr.length === selectedArr.length &&
-    correctArr.every(c => selectedArr.includes(c)) &&
-    selectedArr.every(c => correctArr.includes(c));
-
-  let pts = 0;
-  if (isCorrect) { const speedBonus = Math.max(0, 1 - elapsed / timeLimit); pts = Math.round(500 + 500 * speedBonus); correctCount++; }
-
-  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { [`answers/${qi}`]: { choice: selectedArr, pts, time: elapsed } });
-  if (isCorrect) await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: myScore + pts });
-  revealMultiAnswer(qi, correctArr, isCorrect, pts);
+document.getElementById('btn-multi-submit').addEventListener('click',async()=>{
+  if(hasAnswered||multiSelected.size===0){if(multiSelected.size===0)toast('Select at least one answer','error');return;}
+  hasAnswered=true;
+  document.querySelectorAll('.answer-btn').forEach(b=>b.disabled=true);
+  document.getElementById('answered-badge').style.display='flex';
+  document.getElementById('btn-multi-submit').disabled=true;
+  const qi=lastQuestionIndex;
+  const roomSnap=await get(ref(db,`rooms/${roomCode}`));
+  const room=roomSnap.val();
+  const elapsed=(Date.now()-room.questionStartTime)/1000;
+  const timeLimit=room.quiz.questions[qi].timeLimit||20;
+  const correctArr=room.quiz.questions[qi].correct||[];
+  const selectedArr=[...multiSelected];
+  const isCorrect=correctArr.length===selectedArr.length&&correctArr.every(c=>selectedArr.includes(c))&&selectedArr.every(c=>correctArr.includes(c));
+  let pts=0;
+  if(isCorrect){const speedBonus=Math.max(0,1-elapsed/timeLimit);pts=applyProMultiplier(Math.round(500+500*speedBonus));correctCount++;}
+  await update(ref(db,`rooms/${roomCode}/players/${playerId}`),{[`answers/${qi}`]:{choice:selectedArr,pts,time:elapsed}});
+  if(isCorrect) await update(ref(db,`rooms/${roomCode}/players/${playerId}`),{score:myScore+pts});
+  revealMultiAnswer(qi,correctArr,isCorrect,pts);
 });
 
-async function submitSingleAnswer(qi, choice) {
-  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
-  const room = roomSnap.val();
-  const elapsed = (Date.now() - room.questionStartTime) / 1000;
-  const timeLimit = room.quiz.questions[qi].timeLimit || 20;
-  const q = room.quiz.questions[qi];
-  const qtype = q.qtype || 'mc';
-
-  let pts = 0, isCorrect = false;
-  if (qtype === 'poll') {
-    // Everyone gets points for participating in a poll
-    pts = 100; isCorrect = true;
-  } else {
-    const correctIdx = q.correct;
-    isCorrect = choice === correctIdx;
-    if (isCorrect) { const speedBonus = Math.max(0, 1 - elapsed / timeLimit); pts = Math.round(500 + 500 * speedBonus); correctCount++; }
-  }
-
-  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { [`answers/${qi}`]: { choice, pts, time: elapsed } });
-  if (pts > 0) await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: myScore + pts });
-
-  if (qtype === 'poll') {
-    revealPollAnswer(qi, choice, pts);
-  } else {
-    revealAnswer(qi, choice, isCorrect, pts);
-  }
+async function submitSingleAnswer(qi,choice) {
+  const roomSnap=await get(ref(db,`rooms/${roomCode}`));
+  const room=roomSnap.val();
+  const elapsed=(Date.now()-room.questionStartTime)/1000;
+  const q=room.quiz.questions[qi];
+  const qtype=q.qtype||'mc';
+  let pts=0,isCorrect=false;
+  if(qtype==='poll'){pts=applyProMultiplier(100);isCorrect=true;}
+  else{const correctIdx=q.correct;isCorrect=choice===correctIdx;if(isCorrect){const speedBonus=Math.max(0,1-elapsed/(q.timeLimit||20));pts=applyProMultiplier(Math.round(500+500*speedBonus));correctCount++;}}
+  await update(ref(db,`rooms/${roomCode}/players/${playerId}`),{[`answers/${qi}`]:{choice,pts,time:elapsed}});
+  if(pts>0) await update(ref(db,`rooms/${roomCode}/players/${playerId}`),{score:myScore+pts});
+  if(qtype==='poll') revealPollAnswer(qi,choice,pts);
+  else revealAnswer(qi,choice,isCorrect,pts);
 }
 
-function revealAnswer(qi, selectedChoice, isCorrect, pts = 0) {
-  get(ref(db, `rooms/${roomCode}/quiz/questions/${qi}`)).then(snap => {
-    if (!snap.exists()) return;
-    const q = snap.val();
-    const correctIdx = q.correct;
-    document.querySelectorAll('.answer-btn').forEach((btn, i) => {
-      btn.disabled = true;
-      if (i === correctIdx) btn.classList.add('correct');
-      else if (i === selectedChoice && selectedChoice !== correctIdx) btn.classList.add('wrong');
+function revealAnswer(qi,selectedChoice,isCorrect,pts=0) {
+  get(ref(db,`rooms/${roomCode}/quiz/questions/${qi}`)).then(snap=>{
+    if(!snap.exists()) return;
+    const q=snap.val();
+    const correctIdx=q.correct;
+    document.querySelectorAll('.answer-btn').forEach((btn,i)=>{
+      btn.disabled=true;
+      if(i===correctIdx) btn.classList.add('correct');
+      else if(i===selectedChoice&&selectedChoice!==correctIdx) btn.classList.add('wrong');
     });
     clearTimer();
-    setTimeout(() => showResultScreen(isCorrect, selectedChoice, pts), 1400);
+    setTimeout(()=>afterReveal(isCorrect,selectedChoice,pts),1400);
   });
 }
-
-function revealMultiAnswer(qi, correctArr, isCorrect, pts) {
-  document.querySelectorAll('.answer-btn').forEach((btn, i) => {
-    btn.disabled = true; btn.classList.remove('multi-selected');
-    if (correctArr.includes(i)) btn.classList.add('correct');
-    else if (multiSelected.has(i)) btn.classList.add('wrong');
-  });
+function revealMultiAnswer(qi,correctArr,isCorrect,pts) {
+  document.querySelectorAll('.answer-btn').forEach((btn,i)=>{btn.disabled=true;btn.classList.remove('multi-selected');if(correctArr.includes(i))btn.classList.add('correct');else if(multiSelected.has(i))btn.classList.add('wrong');});
   clearTimer();
-  setTimeout(() => showResultScreen(isCorrect, null, pts, 'multi'), 1400);
+  setTimeout(()=>afterReveal(isCorrect,null,pts,'multi'),1400);
+}
+function revealPollAnswer(qi,choice,pts) {
+  document.querySelectorAll('.answer-btn').forEach(b=>b.disabled=true);
+  clearTimer();
+  setTimeout(()=>afterReveal(true,choice,pts,'poll'),1400);
 }
 
-function revealPollAnswer(qi, choice, pts) {
-  document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
-  clearTimer();
-  setTimeout(() => showResultScreen(true, choice, pts, 'poll'), 1400);
-}
-
-function showResultScreen(isCorrect, selectedChoice, pts, mode = 'mc') {
-  let icon, title, titleColor, titleShadow;
-  if (mode === 'poll') {
-    icon = SVG_POLL; title = 'Vote Counted!';
-    titleColor = 'var(--neon-orange)'; titleShadow = '0 0 20px rgba(255,109,0,0.5)';
-  } else if (isCorrect) {
-    icon = SVG_CORRECT; title = 'Correct!';
-    titleColor = 'var(--neon-green)'; titleShadow = '0 0 20px rgba(57,255,20,0.5)';
-  } else if (selectedChoice === -1) {
-    icon = SVG_TIMEOUT; title = "Time's Up!";
-    titleColor = 'var(--neon-orange)'; titleShadow = '0 0 20px rgba(255,109,0,0.5)';
-  } else {
-    icon = SVG_WRONG; title = mode === 'multi' ? 'Not Quite!' : 'Wrong!';
-    titleColor = 'var(--neon-pink)'; titleShadow = '0 0 20px rgba(255,0,110,0.5)';
+async function afterReveal(isCorrect,selectedChoice,pts,mode='mc') {
+  if(gameMode==='hack'&&isCorrect&&mode!=='poll'){
+    const roomSnap=await get(ref(db,`rooms/${roomCode}/players`));
+    const players=roomSnap.val()||{};
+    const others=Object.values(players).filter(p=>p.name!==playerName&&p.password);
+    if(others.length>0){
+      const target=others[Math.floor(Math.random()*others.length)];
+      showHackMinigame(target.name,target.password,()=>showResultScreen(isCorrect,selectedChoice,pts,mode));
+      return;
+    }
   }
-  document.getElementById('result-icon').innerHTML = icon;
-  document.getElementById('result-title').textContent = title;
-  document.getElementById('result-title').style.color = titleColor;
-  document.getElementById('result-title').style.textShadow = titleShadow;
-  document.getElementById('result-pts').textContent = pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
-  get(ref(db, `rooms/${roomCode}/players/${playerId}`)).then(s => {
-    document.getElementById('result-total').textContent = (s.exists() ? (s.val().score || 0) : myScore).toLocaleString();
+  showResultScreen(isCorrect,selectedChoice,pts,mode);
+}
+
+function showResultScreen(isCorrect,selectedChoice,pts,mode='mc') {
+  let icon,title,titleColor;
+  if(mode==='poll'){icon=SVG_POLL;title='Vote Counted!';titleColor='var(--neon-orange)';}
+  else if(isCorrect){icon=SVG_CORRECT;title=gameMode==='cook'?'Dish Served!':'Correct!';titleColor='var(--neon-green)';}
+  else if(selectedChoice===-1){icon=SVG_TIMEOUT;title="Time's Up!";titleColor='var(--neon-orange)';}
+  else{icon=SVG_WRONG;title=gameMode==='cook'?'Undercooked!':(mode==='multi'?'Not Quite!':'Wrong!');titleColor='var(--neon-pink)';}
+  document.getElementById('result-icon').innerHTML=icon;
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-title').style.color=titleColor;
+  document.getElementById('result-pts').textContent=pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
+  const proNotice = document.getElementById('result-pts-pro');
+  proNotice.style.display = (hasProSubscription && pts > 0 && isCorrect) ? 'block' : 'none';
+  get(ref(db,`rooms/${roomCode}/players/${playerId}`)).then(s=>{
+    document.getElementById('result-total').textContent=(s.exists()?(s.val().score||0):myScore).toLocaleString();
   });
   showScreen('screen-result');
 }
 
 // ===== LEADERBOARD =====
 function showLeaderboard(players) {
-  const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-  const container = document.getElementById('player-leaderboard');
-  container.innerHTML = '';
-  sorted.slice(0, 10).forEach((p, i) => {
-    const el = document.createElement('div');
-    el.className = 'lb-item'; el.style.animationDelay = (i * 0.06) + 's';
-    const isMine = p.name === playerName;
-    if (isMine) el.style.borderColor = 'rgba(0,245,255,0.35)';
-    const rankHTML = i < 3 ? MEDAL_SVG[i] : `<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
-    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color||'rgba(0,245,255,0.1)'};font-size:1rem;">${p.avatar}</div>` : '';
-    el.innerHTML = `<div class="lb-rank" style="display:flex;align-items:center;">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${isMine ? ' <span style="color:var(--neon-cyan);font-size:0.7rem;">(you)</span>' : ''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
+  const sorted=Object.values(players).sort((a,b)=>b.score-a.score);
+  const container=document.getElementById('player-leaderboard');
+  container.innerHTML='';
+  sorted.slice(0,10).forEach((p,i)=>{
+    const el=document.createElement('div');
+    el.className='lb-item'; el.style.animationDelay=(i*0.06)+'s';
+    const isMine=p.name===playerName;
+    if(isMine) el.style.borderColor='rgba(0,245,255,0.35)';
+    const rankHTML=i<3?MEDAL_SVG[i]:`<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
+    const avatarEl = renderLbAvatar(p, isMine);
+    const proStar = p.isPro ? `<svg width="10" height="10" fill="var(--neon-yellow)" viewBox="0 0 24 24" style="vertical-align:middle;margin-left:3px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>` : '';
+    el.innerHTML=`<div class="lb-rank">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${proStar}${isMine?' <span style="font-size:0.7rem;color:var(--neon-cyan);">(you)</span>':''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
     container.appendChild(el);
   });
   showScreen('screen-leaderboard');
 }
 
 // ===== FINAL =====
-function showFinal(players, room) {
-  const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-  const myIdx = sorted.findIndex(p => p.name === playerName);
-  const myRank = myIdx + 1;
-  document.getElementById('final-icon').innerHTML = trophySVG(myRank);
-  document.getElementById('final-rank-msg').textContent = `You placed #${myRank} of ${sorted.length}!`;
-  const me = sorted[myIdx] || {};
-  document.getElementById('final-score').textContent = (me.score||0).toLocaleString();
-  document.getElementById('final-correct').textContent = correctCount;
-  document.getElementById('final-rank').textContent = '#' + myRank;
-  const lb = document.getElementById('final-leaderboard'); lb.innerHTML = '';
-  sorted.slice(0, 5).forEach((p, i) => {
-    const el = document.createElement('div'); el.className = 'lb-item'; el.style.animationDelay = (i * 0.08) + 's';
-    const isMine = p.name === playerName;
-    if (isMine) el.style.borderColor = 'rgba(0,245,255,0.35)';
-    const rankHTML = i < 3 ? MEDAL_SVG[i] : `<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
-    const avatarEl = p.avatar ? `<div class="lb-avatar" style="background:${p.color||'rgba(0,245,255,0.1)'};font-size:1rem;">${p.avatar}</div>` : '';
-    el.innerHTML = `<div class="lb-rank">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${isMine ? ' <span style="color:var(--neon-cyan);font-size:0.7rem;">(you)</span>' : ''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
+function showFinal(players,room) {
+  const sorted=Object.values(players).sort((a,b)=>b.score-a.score);
+  const myIdx=sorted.findIndex(p=>p.name===playerName);
+  const myRank=myIdx+1;
+  document.getElementById('final-icon').innerHTML=trophySVG(myRank);
+  document.getElementById('final-rank-msg').textContent=`You placed #${myRank} of ${sorted.length}!`;
+  const me=sorted[myIdx]||{};
+  const finalScore=me.score||0;
+  document.getElementById('final-score').textContent=finalScore.toLocaleString();
+  document.getElementById('final-correct').textContent=correctCount;
+  document.getElementById('final-rank').textContent='#'+myRank;
+
+  const pct = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+  const earnedBB = awardBrainBits(pct);
+  const bbBanner = document.getElementById('bb-earned-banner');
+  if (earnedBB > 0) {
+    bbBanner.style.display = 'block';
+    const proNote = hasProSubscription ? ' (Pro bonus applied)' : '';
+    bbBanner.textContent = `+${earnedBB}B Brain Bits earned! (${pct}% correct)${proNote} · Total: ${brainBits}B`;
+  } else {
+    bbBanner.style.display = 'none';
+  }
+
+  gamesPlayed++;
+  localStorage.setItem('qx_games_played', gamesPlayed);
+
+  const lb=document.getElementById('final-leaderboard'); lb.innerHTML='';
+  sorted.slice(0,5).forEach((p,i)=>{
+    const el=document.createElement('div'); el.className='lb-item'; el.style.animationDelay=(i*0.08)+'s';
+    const isMine=p.name===playerName;
+    if(isMine) el.style.borderColor='rgba(0,245,255,0.35)';
+    const rankHTML=i<3?MEDAL_SVG[i]:`<span style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);">${i+1}</span>`;
+    const avatarEl = renderLbAvatar(p, isMine);
+    const proStar = p.isPro ? `<svg width="10" height="10" fill="var(--neon-yellow)" viewBox="0 0 24 24" style="vertical-align:middle;margin-left:3px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>` : '';
+    el.innerHTML=`<div class="lb-rank">${rankHTML}</div>${avatarEl}<div class="lb-name">${p.name}${proStar}${isMine?' <span style="font-size:0.7rem;">(you)</span>':''}</div><div class="lb-score">${(p.score||0).toLocaleString()}</div>`;
     lb.appendChild(el);
   });
   showScreen('screen-final');
 }
 
-document.getElementById('btn-play-again').addEventListener('click', () => window.location.reload());
+document.getElementById('btn-play-again').addEventListener('click',()=>window.location.reload());
 </script>
 </body>
 </html>
