@@ -1054,6 +1054,15 @@ async function endGame(){
   const snap=await get(ref(db,`rooms/${roomCode}/players`));
   const players=snap.val()||{};
   const sorted=Object.values(players).sort((a,b)=>b.score-a.score);
+  // Secret quiz reward
+if (localStorage.getItem('qx_secret_quiz') === '1') {
+  const reward = parseInt(localStorage.getItem('qx_secret_reward') || '500');
+  const current = parseInt(localStorage.getItem('qx_brain_bits') || '0');
+  localStorage.setItem('qx_brain_bits', current + reward);
+  localStorage.removeItem('qx_secret_quiz');
+  localStorage.removeItem('qx_secret_reward');
+  toast(`🎉 Secret quiz bonus! +${reward}B Brain Bits awarded!`, 'success');
+}
   document.getElementById('final-trophy-icon').innerHTML=`<svg width="80" height="80" fill="none" viewBox="0 0 24 24"><path stroke="#ffe600" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15a6 6 0 100-12 6 6 0 000 12zM8.21 13.89L7 23l5-3 5 3-1.21-9.12" fill="rgba(255,230,0,0.08)"/></svg>`;
   document.getElementById('winner-name').textContent=sorted[0]?sorted[0].name:'—';
   const lb=document.getElementById('final-host-leaderboard'); lb.innerHTML='';
