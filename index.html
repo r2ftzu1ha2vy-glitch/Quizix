@@ -2074,15 +2074,15 @@ function renderBuiltinQuizzes() {
 // Hook into showSidebarPanel
 const _origShowPanel = window.showSidebarPanel;
 window.showSidebarPanel = function(panel) {
-  _origShowPanel(panel);
-  if (panel === 'builtin') {
-    renderBuiltinQuizzes();
-    // Fix display since sidebar-panel default is flex
-    document.getElementById('panel-builtin').style.display = 'flex';
-    // Update sidebar active state
-    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('sb-builtin-btn').classList.add('active');
-  }
+  document.querySelectorAll('.sidebar-panel').forEach(p => { p.classList.remove('panel-active'); p.style.display = 'none'; });
+  const targetPanel = document.getElementById('panel-' + panel);
+  if (targetPanel) { targetPanel.classList.add('panel-active'); targetPanel.style.display = 'flex'; }
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  const btns = { home: 'sb-home-btn', profile: 'sb-profile-btn', saved: 'sb-saved-btn', builtin: 'sb-builtin-btn' };
+  if (btns[panel]) { const b = document.getElementById(btns[panel]); if(b) b.classList.add('active'); }
+  if (panel === 'profile') renderProfilePanel();
+  if (panel === 'saved') renderSavedQuizzes();
+  if (panel === 'builtin') renderBuiltinQuizzes();
 };
 document.getElementById('btn-play-again').addEventListener('click',()=>window.location.reload());
 </script>
