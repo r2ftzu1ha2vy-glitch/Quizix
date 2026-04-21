@@ -832,6 +832,10 @@
         <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
         <span id="answered-label">LOCKED IN</span>
       </div>
+      <div class="streak-badge" id="streak-badge" style="display:none;">
+  <svg width="12" height="12" fill="var(--neon-yellow)" viewBox="0 0 24 24"><path stroke="var(--neon-yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+  <span id="streak-num">0</span>× STREAK
+</div>
     </div>
     <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.1em;color:var(--text-secondary);" id="hud-qnum">Q1</div>
   </div>
@@ -992,6 +996,8 @@ let currentQType = 'mc';
 let gameMode = 'normal';
 let myPassword = null;
 let totalQuestions = 0;
+let currentStreak = 0;
+let bestStreak = 0;
 
 // ===== PRO & BRAIN BITS =====
 let brainBits = parseInt(localStorage.getItem('qx_brain_bits') || '0');
@@ -1877,6 +1883,12 @@ function showResultScreen(isCorrect,selectedChoice,pts,mode='mc') {
   let icon,title,titleColor;
   if(mode==='poll'){icon=SVG_POLL;title='Vote Counted!';titleColor='var(--neon-orange)';}
   else if(isCorrect){icon=SVG_CORRECT;title=gameMode==='cook'?'Dish Served!':'Correct!';titleColor='var(--neon-green)';}
+    if (isCorrect && mode !== 'poll') {
+  currentStreak++;
+  if (currentStreak > bestStreak) bestStreak = currentStreak;
+} else if (mode !== 'poll') {
+  currentStreak = 0;
+}
   else if(selectedChoice===-1){icon=SVG_TIMEOUT;title="Time's Up!";titleColor='var(--neon-orange)';}
   else{icon=SVG_WRONG;title=gameMode==='cook'?'Undercooked!':(mode==='multi'?'Not Quite!':'Wrong!');titleColor='var(--neon-pink)';}
   document.getElementById('result-icon').innerHTML=icon;
