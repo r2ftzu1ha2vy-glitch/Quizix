@@ -8,6 +8,19 @@
 <link rel="icon" href="https://iili.io/BruLSa9.png" sizes="192x192">
   <style>
     .screen-join, .screen-lobby-player, .screen-question, .screen-result, .screen-final, .screen-leaderboard { overflow-y: auto; }
+    .streak-badge {
+  background: rgba(255,230,0,0.1);
+  border: 1px solid rgba(255,230,0,0.35);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--neon-yellow);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 
     /* ===== SCORE BAR ===== */
     .my-score-bar {
@@ -1764,6 +1777,12 @@ function showQuestion(room,qi) {
   updateProPtsBadge();
   if(currentQType!=='slide') startTimer(q.timeLimit||20,room.questionStartTime,qi);
 }
+  if (currentStreak >= 2) {
+  document.getElementById('streak-badge').style.display = 'flex';
+  document.getElementById('streak-num').textContent = currentStreak;
+} else {
+  document.getElementById('streak-badge').style.display = 'none';
+}
 
 // ===== TIMER =====
 function startTimer(totalSecs,startTime,qi) {
@@ -1895,6 +1914,15 @@ function showResultScreen(isCorrect,selectedChoice,pts,mode='mc') {
   document.getElementById('result-title').textContent=title;
   document.getElementById('result-title').style.color=titleColor;
   document.getElementById('result-pts').textContent=pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
+  const streakEl = document.getElementById('result-streak');
+if (streakEl) {
+  if (currentStreak >= 2) {
+    streakEl.style.display = 'block';
+    streakEl.textContent = `${currentStreak}× streak!`;
+  } else {
+    streakEl.style.display = 'none';
+  }
+}
   const proNotice = document.getElementById('result-pts-pro');
   proNotice.style.display = (hasProSubscription && pts > 0 && isCorrect) ? 'block' : 'none';
   get(ref(db,`rooms/${roomCode}/players/${playerId}`)).then(s=>{
