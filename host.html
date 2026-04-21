@@ -677,26 +677,64 @@ function renderPlayerAvatar(p) {
 }
 
 // ===== THEME =====
-const savedTheme=localStorage.getItem('qx_theme')||'dark';
-document.documentElement.setAttribute('data-theme',savedTheme);
+const ALL_THEMES = ['dark','light','dark-green','light-green','dark-purple','light-purple'];
+const savedTheme = localStorage.getItem('qx_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
 updateThemeBtn(savedTheme);
-document.getElementById('theme-toggle-btn').addEventListener('click',()=>{
-  const current=document.documentElement.getAttribute('data-theme');
-  const next=current==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('qx_theme',next);
-  updateThemeBtn(next);
-});
-function updateThemeBtn(theme){
+
+// Legacy toggle btn (host.html has one, index uses top-bar)
+const legacyToggle = document.getElementById('theme-toggle-btn');
+if (legacyToggle) {
+  legacyToggle.addEventListener('click', () => {
+    openSettings();
+  });
+}
+
+function updateThemeBtn(theme) {
   const iconEl = document.getElementById('theme-icon');
-  if (theme==='dark') {
-    iconEl.innerHTML=`<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`;
-    document.getElementById('theme-label').textContent='DARK';
+  const labelEl = document.getElementById('theme-label');
+  if (!iconEl) return;
+  const isDark = theme.startsWith('dark');
+  if (isDark) {
+    iconEl.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`;
+    if (labelEl) labelEl.textContent = theme === 'dark' ? 'DARK' : theme === 'dark-green' ? 'GREEN' : 'PURPLE';
   } else {
-    iconEl.innerHTML=`<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
-    document.getElementById('theme-label').textContent='LIGHT';
+    iconEl.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
+    if (labelEl) labelEl.textContent = theme === 'light' ? 'LIGHT' : theme === 'light-green' ? 'GREEN-L' : 'PURPLE-L';
   }
 }
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('qx_theme', theme);
+  updateThemeBtn(theme);
+  ALL_THEMES.forEach(t => {
+    const btn = document.getElementById('tp-' + t);
+    if (btn) btn.classList.toggle('selected', t === theme);
+  });
+}
+
+window.openSettings = function() {
+  const modal = document.getElementById('settings-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  const cur = localStorage.getItem('qx_theme') || 'dark';
+  ALL_THEMES.forEach(t => {
+    const btn = document.getElementById('tp-' + t);
+    if (btn) btn.classList.toggle('selected', t === cur);
+  });
+};
+
+document.getElementById('settings-modal-close').addEventListener('click', () => {
+  document.getElementById('settings-modal').classList.remove('open');
+});
+document.getElementById('settings-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('settings-modal'))
+    document.getElementById('settings-modal').classList.remove('open');
+});
+document.querySelectorAll('.theme-pick-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
 
 // ===== UTILS =====
 function toast(msg,type=''){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type?' '+type:''); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2800); }
