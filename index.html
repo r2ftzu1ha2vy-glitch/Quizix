@@ -21,6 +21,17 @@
   align-items: center;
   gap: 5px;
 }
+    .reaction-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.reaction-btn:hover { transform: scale(1.2); border-color: var(--border-glow); }
+.reaction-btn:active { transform: scale(0.95); }
 
     /* ===== SCORE BAR ===== */
     .my-score-bar {
@@ -873,6 +884,12 @@
     <button class="answer-btn" data-choice="2"><div class="answer-label">C</div><span class="answer-text"></span></button>
     <button class="answer-btn" data-choice="3"><div class="answer-label">D</div><span class="answer-text"></span></button>
   </div>
+  <div class="reaction-bar" id="reaction-bar" style="display:flex;gap:10px;justify-content:center;margin-top:16px;opacity:0;transition:opacity 0.3s;">
+  <button class="reaction-btn" data-emoji="🔥">🔥</button>
+  <button class="reaction-btn" data-emoji="💀">💀</button>
+  <button class="reaction-btn" data-emoji="🤔">🤔</button>
+  <button class="reaction-btn" data-emoji="😤">😤</button>
+</div>
   <div class="multi-submit-wrap" id="multi-submit-wrap" style="display:none;">
     <button class="btn btn-primary" id="btn-multi-submit" style="width:auto;padding:14px 40px;">Submit Answers</button>
   </div>
@@ -904,6 +921,11 @@
     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style="animation:spin 1.4s linear infinite;"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
     <span id="waiting-lb-text">Waiting for leaderboard...</span>
   </div>
+</div>
+  <div id="test-continue-wrap" style="display:none;justify-content:center;margin-top:20px;">
+  <button class="btn btn-primary" id="btn-test-continue" style="width:auto;padding:14px 40px;">
+    Continue →
+  </button>
 </div>
 
 <!-- LEADERBOARD SCREEN -->
@@ -1502,6 +1524,23 @@ function toast(msg, type='') {
   el.textContent=msg; el.className='toast show'+(type?' '+type:'');
   clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
+  document.getElementById('btn-test-continue').addEventListener('click', async () => {
+  document.getElementById('test-continue-wrap').style.display = 'none';
+  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { readyForNext: lastQuestionIndex });
+  document.getElementById('waiting-lb-text').textContent = 'Waiting for others...';
+});
+  document.querySelectorAll('.reaction-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    set(ref(db, `rooms/${roomCode}/reactions/${playerId}`), {
+      emoji: btn.dataset.emoji,
+      name: playerName,
+      t: Date.now(),
+      qi: lastQuestionIndex
+    });
+    btn.style.transform = 'scale(1.4)';
+    setTimeout(() => btn.style.transform = '', 300);
+  });
+});
 
 // ===== SVG ICONS =====
 const SVG_CORRECT=`<svg width="72" height="72" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="#39ff14" stroke-width="1.5" fill="rgba(57,255,20,0.1)"/><path stroke="#39ff14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3.5 3.5L17 9"/></svg>`;
@@ -1770,6 +1809,9 @@ function showQuestion(room,qi) {
   document.getElementById('timer-wrap-el').style.display=currentQType==='slide'?'none':'flex';
   document.getElementById('slide-continue-wrap').style.display=currentQType==='slide'?'flex':'none';
   document.getElementById('answer-grid').style.display=currentQType==='slide'?'none':'grid';
+  const rbar = document.getElementById('reaction-bar');
+rbar.style.opacity = '0';
+setTimeout(() => { rbar.style.opacity = '1'; }, 2000);
   if(currentQType!=='slide'){
     document.querySelectorAll('.answer-btn').forEach((btn,i)=>{btn.querySelector('.answer-text').textContent=q.choices[i]||'';btn.className='answer-btn';btn.disabled=false;});
   }
@@ -1922,6 +1964,15 @@ if (streakEl) {
   } else {
     streakEl.style.display = 'none';
   }
+}
+  const testContinueWrap = document.getElementById('test-continue-wrap');
+if (testContinueWrap) {
+  // check hostingMode from room
+  get(ref(db, `rooms/${roomCode}/hostingMode`)).then(snap => {
+    if (snap.val() === 'test') {
+      testContinueWrap.style.display = 'flex';
+    }
+  });
 }
   const proNotice = document.getElementById('result-pts-pro');
   proNotice.style.display = (hasProSubscription && pts > 0 && isCorrect) ? 'block' : 'none';
