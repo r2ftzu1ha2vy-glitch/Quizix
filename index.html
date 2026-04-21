@@ -1184,6 +1184,9 @@ function renderSavedQuizzes() {
       <div class="no-saved-icon"><svg width="40" height="40" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
       <div class="no-saved-text">No saved quizzes yet.<br>Create and save one from the host panel!</div>
       <a href="host.html" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-top:8px;">Go Host</a>
+      <button class="sidebar-btn" id="sb-settings-btn" onclick="openSettings()">
+  <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>Settings
+</button>
     </div>`;
     return;
   }
@@ -1271,26 +1274,64 @@ const DISH_SVGS = [
 const CIRCUMFERENCE = 2 * Math.PI * 35;
 
 // ===== THEME =====
+const ALL_THEMES = ['dark','light','dark-green','light-green','dark-purple','light-purple'];
 const savedTheme = localStorage.getItem('qx_theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 updateThemeBtn(savedTheme);
-document.getElementById('theme-toggle-btn').addEventListener('click', () => {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('qx_theme', next);
-  updateThemeBtn(next);
-});
+
+// Legacy toggle btn (host.html has one, index uses top-bar)
+const legacyToggle = document.getElementById('theme-toggle-btn');
+if (legacyToggle) {
+  legacyToggle.addEventListener('click', () => {
+    openSettings();
+  });
+}
+
 function updateThemeBtn(theme) {
   const iconEl = document.getElementById('theme-icon');
-  if (theme === 'dark') {
+  const labelEl = document.getElementById('theme-label');
+  if (!iconEl) return;
+  const isDark = theme.startsWith('dark');
+  if (isDark) {
     iconEl.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`;
-    document.getElementById('theme-label').textContent = 'DARK';
+    if (labelEl) labelEl.textContent = theme === 'dark' ? 'DARK' : theme === 'dark-green' ? 'GREEN' : 'PURPLE';
   } else {
     iconEl.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
-    document.getElementById('theme-label').textContent = 'LIGHT';
+    if (labelEl) labelEl.textContent = theme === 'light' ? 'LIGHT' : theme === 'light-green' ? 'GREEN-L' : 'PURPLE-L';
   }
 }
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('qx_theme', theme);
+  updateThemeBtn(theme);
+  ALL_THEMES.forEach(t => {
+    const btn = document.getElementById('tp-' + t);
+    if (btn) btn.classList.toggle('selected', t === theme);
+  });
+}
+
+window.openSettings = function() {
+  const modal = document.getElementById('settings-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  const cur = localStorage.getItem('qx_theme') || 'dark';
+  ALL_THEMES.forEach(t => {
+    const btn = document.getElementById('tp-' + t);
+    if (btn) btn.classList.toggle('selected', t === cur);
+  });
+};
+
+document.getElementById('settings-modal-close').addEventListener('click', () => {
+  document.getElementById('settings-modal').classList.remove('open');
+});
+document.getElementById('settings-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('settings-modal'))
+    document.getElementById('settings-modal').classList.remove('open');
+});
+document.querySelectorAll('.theme-pick-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
 
 // ===== MATRIX RAIN =====
 function startMatrixRain() {
