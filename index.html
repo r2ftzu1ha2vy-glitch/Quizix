@@ -705,11 +705,8 @@
           Back to Home
         </button>
       </div>
-    </main>
-  </div>
-</div>
-  <!-- BUILT-IN QUIZZES PANEL -->
-<div id="panel-builtin" class="sidebar-panel" style="margin:0 auto;max-width:520px;">
+        <!-- BUILT-IN QUIZZES PANEL -->
+<div id="panel-builtin" class="sidebar-panel" style="margin:0 auto;max-width:520px;width:100%;padding:60px 40px 80px;">
   <div class="section-title">Built-in Quizzes</div>
   <div class="section-sub" style="margin-bottom:4px;">Ready to Play</div>
   <div style="font-family:var(--font-body);font-size:0.9rem;color:var(--text-secondary);margin-bottom:20px;">Load any quiz instantly into the host panel. One of these might be hiding something...</div>
@@ -718,6 +715,9 @@
     <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
     Back to Home
   </button>
+</div>
+    </main>
+  </div>
 </div>
 
 <!-- ===== HACK CUTSCENE ===== -->
@@ -2038,7 +2038,8 @@ const BUILTIN_QUIZZES = [
 
 function renderBuiltinQuizzes() {
   const container = document.getElementById('builtin-quiz-list');
-  if (!container) return;
+if (!container) { console.error('builtin-quiz-list not found'); return; }
+console.log('rendering', BUILTIN_QUIZZES.length, 'quizzes');
   container.innerHTML = '';
   BUILTIN_QUIZZES.forEach((quiz, i) => {
     const card = document.createElement('div');
