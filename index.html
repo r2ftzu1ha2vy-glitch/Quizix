@@ -507,6 +507,9 @@
         <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="17 21 17 13 7 13 7 21"/><polyline stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="7 3 7 8 15 8"/></svg></span>Saved Quizzes
         <span class="sb-badge" id="saved-count-badge">0</span>
       </button>
+      <button class="sidebar-btn" id="sb-builtin-btn" onclick="showSidebarPanel('builtin')">
+  <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>Built-in Quizzes
+</button>
       <div class="sidebar-nav-label">LINKS</div>
       <a href="host.html" class="sidebar-btn" style="text-decoration:none;">
         <span class="sb-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></span>Host a Game
@@ -704,6 +707,17 @@
       </div>
     </main>
   </div>
+</div>
+  <!-- BUILT-IN QUIZZES PANEL -->
+<div id="panel-builtin" class="sidebar-panel" style="margin:0 auto;max-width:520px;">
+  <div class="section-title">Built-in Quizzes</div>
+  <div class="section-sub" style="margin-bottom:4px;">Ready to Play</div>
+  <div style="font-family:var(--font-body);font-size:0.9rem;color:var(--text-secondary);margin-bottom:20px;">Load any quiz instantly into the host panel. One of these might be hiding something...</div>
+  <div id="builtin-quiz-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+  <button class="btn btn-secondary" onclick="showSidebarPanel('home')" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7M19 12H5"/></svg>
+    Back to Home
+  </button>
 </div>
 
 <!-- ===== HACK CUTSCENE ===== -->
@@ -1936,7 +1950,140 @@ function showFinal(players,room) {
   });
   showScreen('screen-final');
 }
+// ===== BUILT-IN QUIZZES =====
+const BUILTIN_QUIZZES = [
+  {
+    title: 'General Knowledge',
+    desc: '10 questions across history, science & pop culture',
+    icon: '🧠',
+    color: 'var(--neon-cyan)',
+    questions: [
+      { question: 'What is the capital of France?', choices: ['London', 'Berlin', 'Paris', 'Madrid'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'How many planets are in our solar system?', choices: ['7', '8', '9', '10'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What is the chemical symbol for water?', choices: ['WA', 'H2O', 'HO2', 'OX'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Who painted the Mona Lisa?', choices: ['Van Gogh', 'Picasso', 'Da Vinci', 'Rembrandt'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What is the largest ocean on Earth?', choices: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], correct: 3, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'How many sides does a hexagon have?', choices: ['5', '6', '7', '8'], correct: 1, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'What gas do plants absorb from the atmosphere?', choices: ['Oxygen', 'Nitrogen', 'Carbon Dioxide', 'Hydrogen'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Which country is the largest by area?', choices: ['China', 'USA', 'Canada', 'Russia'], correct: 3, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What is the speed of light (approx)?', choices: ['300,000 km/s', '150,000 km/s', '500,000 km/s', '1,000,000 km/s'], correct: 0, timeLimit: 25, qtype: 'mc', image: '' },
+      { question: 'What year did World War II end?', choices: ['1943', '1944', '1945', '1946'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+    ]
+  },
+  {
+    title: 'Science & Tech',
+    desc: '10 questions on technology, biology & physics',
+    icon: '⚗️',
+    color: 'var(--neon-green)',
+    questions: [
+      { question: 'What does CPU stand for?', choices: ['Central Processing Unit', 'Core Power Unit', 'Central Power Utility', 'Compute Processing Unit'], correct: 0, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'How many bones are in the adult human body?', choices: ['196', '206', '216', '226'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What is the powerhouse of the cell?', choices: ['Nucleus', 'Ribosome', 'Mitochondria', 'Golgi Body'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Which element has the atomic number 1?', choices: ['Helium', 'Oxygen', 'Hydrogen', 'Carbon'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What programming language was created by Guido van Rossum?', choices: ['Java', 'Python', 'Ruby', 'C++'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What is the unit of electrical resistance?', choices: ['Volt', 'Ampere', 'Watt', 'Ohm'], correct: 3, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What does DNA stand for?', choices: ['Deoxyribonucleic Acid', 'Dinitrogen Acid', 'Dynamic Nucleic Array', 'Deoxynitrogen Acid'], correct: 0, timeLimit: 25, qtype: 'mc', image: '' },
+      { question: 'How many bits are in a byte?', choices: ['4', '8', '16', '32'], correct: 1, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'What planet is known as the Red Planet?', choices: ['Venus', 'Jupiter', 'Mars', 'Saturn'], correct: 2, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'What is the hardest natural substance on Earth?', choices: ['Gold', 'Iron', 'Diamond', 'Quartz'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+    ]
+  },
+  {
+    title: 'History & Geography',
+    desc: '10 questions on world history and places',
+    icon: '🌍',
+    color: 'var(--neon-orange)',
+    questions: [
+      { question: 'In what year did the Titanic sink?', choices: ['1910', '1912', '1914', '1916'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Which country has the most natural lakes?', choices: ['USA', 'Russia', 'Canada', 'Brazil'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Who was the first US President?', choices: ['Abraham Lincoln', 'Thomas Jefferson', 'George Washington', 'John Adams'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What is the longest river in the world?', choices: ['Amazon', 'Yangtze', 'Mississippi', 'Nile'], correct: 3, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'The Great Wall of China was primarily built to defend against which group?', choices: ['Romans', 'Mongols', 'Persians', 'Japanese'], correct: 1, timeLimit: 25, qtype: 'mc', image: '' },
+      { question: 'Which continent is the Sahara Desert on?', choices: ['Asia', 'Australia', 'Africa', 'South America'], correct: 2, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'What ancient wonder was located in Alexandria?', choices: ['Colosseum', 'Library', 'Lighthouse', 'Pyramid'], correct: 2, timeLimit: 25, qtype: 'mc', image: '' },
+      { question: 'Which country gifted the Statue of Liberty to the USA?', choices: ['Britain', 'Spain', 'Italy', 'France'], correct: 3, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Mount Everest is located on the border of Nepal and which country?', choices: ['India', 'China', 'Bhutan', 'Pakistan'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What year did the Berlin Wall fall?', choices: ['1987', '1988', '1989', '1990'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+    ]
+  },
+  {
+    title: 'Pop Culture & Movies',
+    desc: '10 questions on films, music & internet culture',
+    icon: '🎬',
+    color: 'var(--neon-purple)',
+    questions: [
+      { question: 'Which movie features the quote "I\'ll be back"?', choices: ['RoboCop', 'Die Hard', 'The Terminator', 'Predator'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What band was Freddie Mercury the lead singer of?', choices: ['The Beatles', 'Queen', 'Led Zeppelin', 'Rolling Stones'], correct: 1, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'How many Oscar nominations has Meryl Streep received (as of 2024)?', choices: ['17', '19', '21', '25'], correct: 3, timeLimit: 25, qtype: 'mc', image: '' },
+      { question: 'What is the highest-grossing film of all time (not adjusted for inflation)?', choices: ['Titanic', 'Avengers: Endgame', 'Avatar', 'Star Wars: The Force Awakens'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Which platform introduced the concept of "Stories"?', choices: ['Facebook', 'Twitter', 'Snapchat', 'Instagram'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What year was YouTube founded?', choices: ['2003', '2004', '2005', '2006'], correct: 2, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'Which artist has the most Grammy wins?', choices: ['Beyoncé', 'Taylor Swift', 'Jay-Z', 'Adele'], correct: 0, timeLimit: 20, qtype: 'mc', image: '' },
+      { question: 'What fictional kingdom is Elsa from in Frozen?', choices: ['Arendelle', 'Agrabah', 'Atlantis', 'Eldorado'], correct: 0, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'Which video game franchise features Master Chief?', choices: ['Call of Duty', 'Destiny', 'Halo', 'Gears of War'], correct: 2, timeLimit: 15, qtype: 'mc', image: '' },
+      { question: 'What does "GIF" stand for?', choices: ['Graphical Image Format', 'Graphics Interchange Format', 'Global Image File', 'General Image Format'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
+    ]
+  },
+  {
+    title: '👁 ???',
+    desc: 'You found it. One question. Choose wisely.',
+    icon: '👁',
+    color: 'var(--neon-yellow)',
+    secret: true,
+    questions: [
+      { question: 'You found the secret quiz. This is your one chance — answer correctly and claim your reward. What is the answer?', choices: ['The reward is real', 'There is no reward', 'I am already rewarded', 'This is a trick'], correct: 0, timeLimit: 30, qtype: 'mc', image: '', secretReward: 500 },
+    ]
+  },
+];
 
+function renderBuiltinQuizzes() {
+  const container = document.getElementById('builtin-quiz-list');
+  if (!container) return;
+  container.innerHTML = '';
+  BUILTIN_QUIZZES.forEach((quiz, i) => {
+    const card = document.createElement('div');
+    card.className = 'saved-quiz-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+    if (quiz.secret) {
+      card.style.borderColor = 'rgba(255,230,0,0.3)';
+      card.style.background = 'rgba(255,230,0,0.03)';
+    }
+    card.innerHTML = `
+      <div class="sqc-icon" style="color:${quiz.color};background:${quiz.color}15;font-size:1.4rem;">${quiz.icon}</div>
+      <div class="sqc-info">
+        <div class="sqc-title" style="color:${quiz.secret ? 'var(--neon-yellow)' : ''}">${quiz.title}</div>
+        <div class="sqc-meta">${quiz.questions.length} question${quiz.questions.length > 1 ? 's' : ''} · ${quiz.desc}</div>
+      </div>
+      <span class="sqc-arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg></span>
+    `;
+    card.addEventListener('click', () => {
+      if (quiz.secret) {
+        // Store secret flag so host.html can award bits on completion
+        localStorage.setItem('qx_secret_quiz', '1');
+        localStorage.setItem('qx_secret_reward', quiz.questions[0].secretReward);
+      } else {
+        localStorage.removeItem('qx_secret_quiz');
+      }
+      localStorage.setItem('qx_load_quiz', JSON.stringify({ title: quiz.title, questions: quiz.questions }));
+      window.location.href = 'host.html?load=1';
+    });
+    container.appendChild(card);
+  });
+}
+
+// Hook into showSidebarPanel
+const _origShowPanel = window.showSidebarPanel;
+window.showSidebarPanel = function(panel) {
+  _origShowPanel(panel);
+  if (panel === 'builtin') {
+    renderBuiltinQuizzes();
+    // Fix display since sidebar-panel default is flex
+    document.getElementById('panel-builtin').style.display = 'flex';
+    // Update sidebar active state
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sb-builtin-btn').classList.add('active');
+  }
+};
 document.getElementById('btn-play-again').addEventListener('click',()=>window.location.reload());
 </script>
 </body>
