@@ -357,6 +357,105 @@
 </head>
 <body>
 
+  <!-- SETTINGS MODAL -->
+<div class="settings-modal-overlay" id="settings-modal">
+  <div class="settings-modal-box">
+    <button class="modal-close" id="settings-modal-close" style="position:absolute;top:16px;right:16px;background:transparent;border:1px solid var(--border-subtle);color:var(--text-muted);width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;">✕</button>
+    <div class="section-title" style="margin-bottom:6px;">Settings</div>
+    <div class="section-sub" style="margin-bottom:24px;font-size:1.1rem;">Theme</div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <!-- BLUE (default) -->
+      <div style="font-family:var(--font-display);font-size:0.6rem;letter-spacing:0.2em;color:var(--text-muted);margin-bottom:2px;">BLUE</div>
+      <div style="display:flex;gap:12px;">
+        <button class="theme-pick-btn" data-theme="dark" id="tp-dark">
+          <div class="tp-swatch" style="background:linear-gradient(135deg,#03030a,#00f5ff33);border-color:#00f5ff44;"></div>
+          <span>Dark</span>
+          <div class="tp-check" id="tpc-dark">✓</div>
+        </button>
+        <button class="theme-pick-btn" data-theme="light" id="tp-light">
+          <div class="tp-swatch" style="background:linear-gradient(135deg,#f0f2ff,#0077cc33);border-color:#0077cc44;"></div>
+          <span>Light</span>
+          <div class="tp-check" id="tpc-light">✓</div>
+        </button>
+      </div>
+
+      <!-- GREEN -->
+      <div style="font-family:var(--font-display);font-size:0.6rem;letter-spacing:0.2em;color:var(--text-muted);margin-top:8px;margin-bottom:2px;">GREEN</div>
+      <div style="display:flex;gap:12px;">
+        <button class="theme-pick-btn" data-theme="dark-green" id="tp-dark-green">
+          <div class="tp-swatch" style="background:linear-gradient(135deg,#030a03,#39ff1433);border-color:#39ff1444;"></div>
+          <span>Dark</span>
+          <div class="tp-check" id="tpc-dark-green">✓</div>
+        </button>
+        <button class="theme-pick-btn" data-theme="light-green" id="tp-light-green">
+          <div class="tp-swatch" style="background:linear-gradient(135deg,#f0fff0,#1a990033);border-color:#1a990044;"></div>
+          <span>Light</span>
+          <div class="tp-check" id="tpc-light-green">✓</div>
+        </button>
+      </div>
+
+      <!-- PURPLE -->
+      <div style="font-family:var(--font-display);font-size:0.6rem;letter-spacing:0.2em;color:var(--text-muted);margin-top:8px;margin-bottom:2px;">PURPLE</div>
+      <div style="display:flex;gap:12px;">
+        <button class="theme-pick-btn" data-theme="dark-purple" id="tp-dark-purple">
+          <div class="tp-swatch" style="background:linear-gradient(135deg,#07030a,#bf00ff33);border-color:#bf00ff44;"></div>
+          <span>Dark</span>
+          <div class="tp-check" id="tpc-dark-purple">✓</div>
+        </button>
+        <button class="theme-pick-btn" data-theme="light-purple" id="tp-light-purple">
+          <div class="tp-swatch" style="background:linear-gradient(135deg,#faf0ff,#7700cc33);border-color:#7700cc44;"></div>
+          <span>Light</span>
+          <div class="tp-check" id="tpc-light-purple">✓</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.settings-modal-overlay {
+  position: fixed; inset: 0; z-index: 700;
+  background: rgba(3,3,10,0.85); backdrop-filter: blur(14px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+[data-theme="light"] .settings-modal-overlay,
+[data-theme="light-green"] .settings-modal-overlay,
+[data-theme="light-purple"] .settings-modal-overlay {
+  background: rgba(220,225,255,0.7);
+}
+.settings-modal-overlay.open { opacity: 1; pointer-events: all; }
+.settings-modal-box {
+  background: var(--bg-panel); border: 1px solid var(--border-glow);
+  border-radius: var(--radius-xl); padding: 40px 36px;
+  max-width: 380px; width: 92%; position: relative;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+  transform: scale(0.92); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.settings-modal-overlay.open .settings-modal-box { transform: scale(1); }
+.theme-pick-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 14px 10px; background: var(--bg-card);
+  border: 2px solid var(--border-subtle); border-radius: var(--radius-md);
+  cursor: pointer; transition: all 0.2s; position: relative;
+  font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+.theme-pick-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+.theme-pick-btn.selected { border-color: var(--neon-cyan); color: var(--neon-cyan); background: rgba(0,245,255,0.05); }
+.tp-swatch {
+  width: 100%; height: 36px; border-radius: 8px;
+  border: 1px solid transparent;
+}
+.tp-check {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 0.7rem; color: var(--neon-cyan);
+  display: none;
+}
+.theme-pick-btn.selected .tp-check { display: block; }
+</style>
+  
 <canvas id="matrix-canvas"></canvas>
 <div id="scan-glitch" style="display:none;"></div>
 
