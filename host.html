@@ -404,6 +404,18 @@
       </div>
       <div class="mode-desc-text" id="mode-desc-text">Classic Quizix — answer fast, score big, top the leaderboard.</div>
     </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-subtle);">
+  <div class="mode-selector-title">HOSTING MODE</div>
+  <div style="display:flex;gap:12px;margin-top:10px;">
+    <div class="mode-chip chip-normal selected" data-hmode="original" id="chip-hmode-original">
+      <span class="mode-chip-icon">...</span>ORIGINAL
+    </div>
+    <div class="mode-chip chip-hack" data-hmode="test" id="chip-hmode-test">
+      <span class="mode-chip-icon">...</span>TEST MODE
+    </div>
+  </div>
+  <div style="font-family:var(--font-body);font-size:0.85rem;color:var(--text-secondary);margin-top:10px;" id="hmode-desc">Host controls pacing — press Next to advance.</div>
+</div>
 
     <div class="panel">
       <div class="section-title">Quiz Setup</div>
@@ -756,6 +768,18 @@ document.querySelectorAll('.mode-chip').forEach(chip=>{
     selectedGameMode=chip.dataset.mode;
     document.getElementById('mode-desc-text').textContent=MODE_DESCS[selectedGameMode]||'';
   });
+});let selectedHostingMode = 'original';
+const HMODE_DESCS = {
+  original: 'Host controls pacing — press Next to advance.',
+  test: 'Players advance themselves after answering. Great for self-paced practice.'
+};
+document.querySelectorAll('[data-hmode]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('[data-hmode]').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    selectedHostingMode = chip.dataset.hmode;
+    document.getElementById('hmode-desc').textContent = HMODE_DESCS[selectedHostingMode];
+  });
 });
 
 // ===== SAVE QUIZ =====
@@ -904,6 +928,11 @@ function startHostRoomListener(){
       ['resp-pct','slide-resp-pct'].forEach(id=>document.getElementById(id).textContent=pct+'%');
     }
   });
+  if (selectedHostingMode === 'test') {
+  const allReady = Object.values(players).length > 0 &&
+    Object.values(players).every(p => p.readyForNext && p.readyForNext === room.currentQuestion);
+  if (allReady) nextOrLeaderboard();
+}
 }
 
 // ===== START GAME =====
@@ -942,6 +971,9 @@ function renderHostQ(q,qi){
   document.getElementById('slide-q-indicator').textContent=`QUESTION ${qi+1} OF ${quiz.questions.length}`;
   document.getElementById('slide-q-text').textContent=q.question;
   const grid=document.getElementById('host-answer-grid'); grid.innerHTML='';
+  const isTestMode = selectedHostingMode === 'test';
+document.getElementById('btn-next-q').style.display = isTestMode ? 'none' : 'inline-flex';
+document.getElementById('btn-show-lb').style.display = isTestMode ? 'none' : 'inline-flex';
   const slideChoices=document.getElementById('slide-choices'); slideChoices.innerHTML='';
   if(qtype!=='slide'&&q.choices){
     q.choices.forEach((c,i)=>{
