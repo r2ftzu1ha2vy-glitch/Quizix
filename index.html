@@ -983,6 +983,17 @@ let totalQuestions = 0;
 let brainBits = parseInt(localStorage.getItem('qx_brain_bits') || '0');
 let hasProSubscription = localStorage.getItem('qx_pro') === '1';
 let proPhotoData = localStorage.getItem('qx_pro_photo') || null; // base64 data URL
+  // Check if Pro has expired
+const proExpiry = parseInt(localStorage.getItem('qx_pro_expiry') || '0');
+if (hasProSubscription && proExpiry && Date.now() > proExpiry) {
+  hasProSubscription = false;
+  localStorage.removeItem('qx_pro');
+  localStorage.removeItem('qx_pro_expiry');
+  localStorage.removeItem('qx_pro_photo');
+  proPhotoData = null;
+  toast('Your Quizix Pro subscription has expired.', 'error');
+}
+  
 let gamesPlayed = parseInt(localStorage.getItem('qx_games_played') || '0');
 let savedQuizzes = JSON.parse(localStorage.getItem('qx_saved_quizzes') || '[]');
 
@@ -1084,6 +1095,7 @@ document.getElementById('pro-cancel-btn').addEventListener('click', () => {
   if (!confirm('Cancel Quizix Pro? You will receive a 250B refund and lose Pro benefits immediately.')) return;
   hasProSubscription = false;
   localStorage.removeItem('qx_pro');
+  localStorage.removeItem('qx_pro_expiry');
   brainBits += 250;
   saveBrainBits();
   updateBrainBitsUI();
@@ -1221,10 +1233,13 @@ document.getElementById('pro-buy-btn').addEventListener('click', () => {
   if (brainBits < 500) { toast(`You need 500B — you have ${brainBits}B`, 'error'); return; }
   brainBits -= 500; saveBrainBits();
   hasProSubscription = true; localStorage.setItem('qx_pro', '1');
+  // Store expiry: 30 days from now
+  const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+  localStorage.setItem('qx_pro_expiry', expiry);
   document.getElementById('pro-modal').classList.remove('open');
   updateBrainBitsUI();
   renderProSection();
-  toast('Quizix Pro activated! Upload your profile photo.', 'success');
+  toast('Quizix Pro activated for 30 days!', 'success');
 });
 
 // ===== 50 PASSWORDS =====
