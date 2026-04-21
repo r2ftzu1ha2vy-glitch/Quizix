@@ -62,6 +62,96 @@
   --radial-2: rgba(119,0,204,0.04);
 }
 
+/* ===== THEME VARIANTS ===== */
+[data-theme="dark-green"] {
+  --neon-cyan: #39ff14;
+  --neon-purple: #00ff41;
+  --neon-pink: #ff006e;
+  --neon-green: #00f5ff;
+  --neon-orange: #ff6d00;
+  --neon-yellow: #ffe600;
+  --bg-void: #030a03;
+  --bg-deep: #061406;
+  --bg-panel: #0a1a0a;
+  --bg-card: #0d200d;
+  --bg-elevated: #112211;
+  --border-glow: rgba(57,255,20,0.2);
+  --border-subtle: rgba(255,255,255,0.06);
+  --text-primary: #e8ffe8;
+  --text-secondary: #5a9060;
+  --text-muted: #2d5030;
+  --grid-line: rgba(57,255,20,0.03);
+  --radial-1: rgba(57,255,20,0.06);
+  --radial-2: rgba(0,255,65,0.05);
+}
+
+[data-theme="light-green"] {
+  --neon-cyan: #1a9900;
+  --neon-purple: #007700;
+  --neon-pink: #cc0055;
+  --neon-green: #0077cc;
+  --neon-orange: #cc5500;
+  --neon-yellow: #aa8800;
+  --bg-void: #f0fff0;
+  --bg-deep: #e4f8e4;
+  --bg-panel: #ffffff;
+  --bg-card: #f4fff4;
+  --bg-elevated: #eaf8ea;
+  --border-glow: rgba(26,153,0,0.25);
+  --border-subtle: rgba(0,80,0,0.1);
+  --text-primary: #0a1f0a;
+  --text-secondary: #2d5030;
+  --text-muted: #6a9060;
+  --grid-line: rgba(26,153,0,0.04);
+  --radial-1: rgba(26,153,0,0.05);
+  --radial-2: rgba(0,119,0,0.04);
+}
+
+[data-theme="dark-purple"] {
+  --neon-cyan: #bf00ff;
+  --neon-purple: #ff00ff;
+  --neon-pink: #ff006e;
+  --neon-green: #39ff14;
+  --neon-orange: #ff6d00;
+  --neon-yellow: #ffe600;
+  --bg-void: #07030a;
+  --bg-deep: #110620;
+  --bg-panel: #160a2a;
+  --bg-card: #1a0d30;
+  --bg-elevated: #1f1038;
+  --border-glow: rgba(191,0,255,0.25);
+  --border-subtle: rgba(255,255,255,0.06);
+  --text-primary: #f0e8ff;
+  --text-secondary: #8060aa;
+  --text-muted: #44286a;
+  --grid-line: rgba(191,0,255,0.03);
+  --radial-1: rgba(191,0,255,0.07);
+  --radial-2: rgba(255,0,255,0.05);
+}
+
+[data-theme="light-purple"] {
+  --neon-cyan: #7700cc;
+  --neon-purple: #aa00dd;
+  --neon-pink: #cc0055;
+  --neon-green: #1a9900;
+  --neon-orange: #cc5500;
+  --neon-yellow: #aa8800;
+  --bg-void: #faf0ff;
+  --bg-deep: #f0e4fa;
+  --bg-panel: #ffffff;
+  --bg-card: #fdf4ff;
+  --bg-elevated: #f5eefb;
+  --border-glow: rgba(119,0,204,0.25);
+  --border-subtle: rgba(80,0,80,0.1);
+  --text-primary: #1a0a2a;
+  --text-secondary: #5a3070;
+  --text-muted: #9070a8;
+  --grid-line: rgba(119,0,204,0.04);
+  --radial-1: rgba(119,0,204,0.05);
+  --radial-2: rgba(170,0,221,0.04);
+}
+
+/* dark/light are already defined above as dark and light */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
