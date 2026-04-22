@@ -1379,6 +1379,7 @@ const ALL_THEMES = ['dark','light','dark-green','light-green','dark-purple','lig
 const savedTheme = localStorage.getItem('qx_theme') || 'dark';
 document.documentElement.setAttribute('data-theme', savedTheme);
 updateThemeBtn(savedTheme);
+updateThemeImages(savedTheme);
 
 // Legacy toggle btn (host.html has one, index uses top-bar)
 const legacyToggle = document.getElementById('theme-toggle-btn');
@@ -1406,10 +1407,44 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('qx_theme', theme);
   updateThemeBtn(theme);
+  updateThemeImages(theme); // ADD THIS LINE
   ALL_THEMES.forEach(t => {
     const btn = document.getElementById('tp-' + t);
     if (btn) btn.classList.toggle('selected', t === theme);
   });
+}
+
+function updateThemeImages(theme) {
+  const isGreen = theme.includes('green');
+  const isPurple = theme.includes('purple');
+  const isBlue = !isGreen && !isPurple;
+
+  const heroImg = document.getElementById('hero-logo-fallback')?.previousElementSibling;
+  const sidebarImg = document.querySelector('.sidebar-logo-img');
+  const favicon = document.querySelector('link[rel="icon"]');
+
+  const images = {
+    hero: isGreen ? 'https://iili.io/BryjMqG.png' : isPurple ? 'https://iili.io/Bryj7Jp.png' : 'https://iili.io/Bg2rBmG.png',
+    sidebar: isGreen ? 'https://iili.io/Bryj1Xn.png' : isPurple ? 'https://iili.io/BryjEss.png' : 'https://iili.io/BU5hHLQ.png',
+    favicon: isGreen ? 'https://iili.io/BryjY5N.png' : isPurple ? 'https://iili.io/BryjaeI.png' : 'https://iili.io/BruLSa9.png',
+    pro: isGreen ? 'https://iili.io/Bryj0zX.png' : isPurple ? 'https://iili.io/BryjRgR.png' : 'https://iili.io/BghBKMu.png',
+  };
+
+  const heroImgEl = document.querySelector('.home-hero-img');
+  if (heroImgEl) heroImgEl.src = images.hero;
+  if (sidebarImg) sidebarImg.src = images.sidebar;
+  if (favicon) favicon.href = images.favicon;
+
+  // Update tab icon properly
+  document.querySelectorAll('link[rel="icon"]').forEach(el => el.href = images.favicon);
+
+  // Pro modal image
+  const proImg = document.querySelector('.pro-modal-img');
+  if (proImg) proImg.src = images.pro;
+
+  // Final screen logo
+  const finalLogo = document.querySelector('#screen-final .logo-img');
+  if (finalLogo) finalLogo.src = images.sidebar;
 }
 
 window.openSettings = function() {
