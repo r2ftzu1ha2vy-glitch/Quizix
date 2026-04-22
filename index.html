@@ -32,6 +32,42 @@
 }
 .reaction-btn:hover { transform: scale(1.2); border-color: var(--border-glow); }
 .reaction-btn:active { transform: scale(0.95); }
+@media (max-width: 600px) {
+  .answer-grid { grid-template-columns: 1fr !important; gap: 10px; }
+  .answer-btn { min-height: 60px; padding: 14px 16px; font-size: 1rem; }
+  .question-text { font-size: 1.1rem !important; padding: 0 8px; margin-bottom: 18px; }
+  .screen-question { padding-top: 68px; padding-left: 10px; padding-right: 10px; }
+  .my-score-bar { padding: 8px 12px; }
+  .my-score-val { font-size: 0.9rem; }
+  .my-score-label { font-size: 0.5rem; }
+  .timer-ring { width: 60px !important; height: 60px !important; }
+  .timer-ring svg { width: 60px !important; height: 60px !important; }
+  .timer-number { font-size: 1.05rem; }
+  .timer-wrap { margin-bottom: 12px; }
+  .q-number-label { font-size: 0.6rem; margin-bottom: 10px; }
+  .progress-bar-wrap { margin-bottom: 14px; }
+  .reaction-bar { gap: 6px; margin-top: 10px; }
+  .reaction-btn { padding: 4px 10px; font-size: 0.9rem; }
+  .home-cta-card { padding: 20px 16px; }
+  .top-bar-right { top: 8px; right: 8px; gap: 5px; }
+  .brain-bits-badge { padding: 4px 8px; font-size: 0.58rem; }
+  #bb-display { display: none; }
+  .theme-toggle { padding: 4px 8px; font-size: 0.5rem; }
+  .answered-badge { font-size: 0.55rem; padding: 3px 8px; gap: 4px; }
+  .streak-badge { font-size: 0.55rem; padding: 3px 8px; }
+  #hud-qnum { font-size: 0.55rem; }
+  #pro-pts-badge { font-size: 0.5rem; padding: 2px 6px; }
+  .q-image-wrap img { max-height: 160px; }
+  #result-total { font-size: 2.2rem !important; }
+  .lb-item { padding: 10px 12px; gap: 10px; }
+  .lb-name { font-size: 0.9rem; }
+  .lb-score { font-size: 0.75rem; }
+  #screen-leaderboard, #screen-result, #screen-final { padding: 12px; }
+  .stat-row { gap: 8px; }
+  .stat-badge { padding: 8px 12px; }
+  .stat-badge .s-val { font-size: 1rem; }
+  .multi-submit-wrap button { padding: 12px 28px; }
+}
 
     /* ===== SCORE BAR ===== */
     .my-score-bar {
@@ -922,11 +958,7 @@
     <span id="waiting-lb-text">Waiting for leaderboard...</span>
   </div>
 </div>
-  <div id="test-continue-wrap" style="display:none;justify-content:center;margin-top:20px;">
-  <button class="btn btn-primary" id="btn-test-continue" style="width:auto;padding:14px 40px;">
-    Continue →
-  </button>
-</div>
+<div id="test-continue-wrap" style="display:none;"></div>
 
 <!-- LEADERBOARD SCREEN -->
 <div class="screen" id="screen-leaderboard">
@@ -1204,16 +1236,15 @@ const COLORS = [
 window.showSidebarPanel = function(panel) {
   document.querySelectorAll('.sidebar-panel').forEach(p => { p.classList.remove('panel-active'); p.style.display = 'none'; });
   const targetPanel = document.getElementById('panel-' + panel);
-  targetPanel.classList.add('panel-active');
-  targetPanel.style.display = 'flex';
+  if (targetPanel) { targetPanel.classList.add('panel-active'); targetPanel.style.display = 'flex'; }
   document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-  const btns = {'home':'sb-home-btn','profile':'sb-profile-btn','saved':'sb-saved-btn'};
-  if (btns[panel]) document.getElementById(btns[panel]).classList.add('active');
+  const btns = {'home':'sb-home-btn','profile':'sb-profile-btn','saved':'sb-saved-btn','builtin':'sb-builtin-btn'};
+  if (btns[panel]) { const b = document.getElementById(btns[panel]); if(b) b.classList.add('active'); }
   if (panel === 'profile') renderProfilePanel();
   if (panel === 'saved') renderSavedQuizzes();
+  if (panel === 'builtin') renderBuiltinQuizzes();
 };
-
-function renderProfilePanel() {
+window.renderProfilePanel = function() {
   const name = localStorage.getItem('qx_last_name') || 'No name yet';
   const avatarIdx = parseInt(localStorage.getItem('qx_last_avatar_idx') || '0');
   const color = localStorage.getItem('qx_last_color') || 'rgba(0,245,255,0.15)';
@@ -1241,7 +1272,7 @@ function renderProfilePanel() {
   updateBrainBitsUI();
 }
 
-function renderSavedQuizzes() {
+window.renderSavedQuizzes = function() {
   savedQuizzes = JSON.parse(localStorage.getItem('qx_saved_quizzes') || '[]');
   const container = document.getElementById('saved-quizzes-list');
   document.getElementById('stat-saved-quizzes').textContent = savedQuizzes.length;
@@ -1524,11 +1555,6 @@ function toast(msg, type='') {
   el.textContent=msg; el.className='toast show'+(type?' '+type:'');
   clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2800);
 }
-  document.getElementById('btn-test-continue').addEventListener('click', async () => {
-  document.getElementById('test-continue-wrap').style.display = 'none';
-  await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { readyForNext: lastQuestionIndex });
-  document.getElementById('waiting-lb-text').textContent = 'Waiting for others...';
-});
   document.querySelectorAll('.reaction-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     set(ref(db, `rooms/${roomCode}/reactions/${playerId}`), {
@@ -1733,6 +1759,7 @@ async function joinGame() {
     showCookIntro(playerName,()=>{showScreen('screen-lobby-player');startRoomListener();});
   } else {
     showScreen('screen-lobby-player');
+    startLobbyMusic();
     startRoomListener();
   }
 }
@@ -1763,6 +1790,20 @@ function startRoomListener() {
   unsubRoom=onValue(ref(db,`rooms/${roomCode}`),snap=>{
     if(!snap.exists()) return;
     const room=snap.val();
+// Auto-advance for built-in (test mode) quizzes
+    if(room.hostingMode==='test' && room.status==='question') {
+      const players=room.players||{};
+      const pids=Object.keys(players);
+      const qi=room.currentQuestion||0;
+      const allReady=pids.length>0&&pids.every(pid=>players[pid].readyForNext===qi);
+      if(allReady){
+        update(ref(db,`rooms/${roomCode}`),{
+          status:'leaderboard',
+          currentQuestion: qi
+        });
+        return;
+      }
+    }
     const players=room.players||{};
     document.getElementById('lobby-player-count').textContent=Object.keys(players).length;
     if(room.quiz) document.getElementById('lobby-q-count').textContent=room.quiz.questions?.length||0;
@@ -1794,6 +1835,7 @@ function startRoomListener() {
 
 // ===== SHOW QUESTION =====
 function showQuestion(room,qi) {
+  stopLobbyMusic();
   const q=room.quiz.questions[qi]; if(!q) return;
   currentQType=q.qtype||'mc';
   document.getElementById('question-text').textContent=q.question;
@@ -1815,15 +1857,15 @@ setTimeout(() => { rbar.style.opacity = '1'; }, 2000);
   if(currentQType!=='slide'){
     document.querySelectorAll('.answer-btn').forEach((btn,i)=>{btn.querySelector('.answer-text').textContent=q.choices[i]||'';btn.className='answer-btn';btn.disabled=false;});
   }
-  showScreen('screen-question');
-  updateProPtsBadge();
-  if(currentQType!=='slide') startTimer(q.timeLimit||20,room.questionStartTime,qi);
-}
   if (currentStreak >= 2) {
   document.getElementById('streak-badge').style.display = 'flex';
   document.getElementById('streak-num').textContent = currentStreak;
 } else {
   document.getElementById('streak-badge').style.display = 'none';
+}
+  showScreen('screen-question');
+  updateProPtsBadge();
+  if(currentQType!=='slide') startTimer(q.timeLimit||20,room.questionStartTime,qi);
 }
 
 // ===== TIMER =====
@@ -1944,44 +1986,31 @@ function showResultScreen(isCorrect,selectedChoice,pts,mode='mc') {
   let icon,title,titleColor;
   if(mode==='poll'){icon=SVG_POLL;title='Vote Counted!';titleColor='var(--neon-orange)';}
   else if(isCorrect){icon=SVG_CORRECT;title=gameMode==='cook'?'Dish Served!':'Correct!';titleColor='var(--neon-green)';}
-    if (isCorrect && mode !== 'poll') {
-  currentStreak++;
-  if (currentStreak > bestStreak) bestStreak = currentStreak;
-} else if (mode !== 'poll') {
-  currentStreak = 0;
-}
   else if(selectedChoice===-1){icon=SVG_TIMEOUT;title="Time's Up!";titleColor='var(--neon-orange)';}
   else{icon=SVG_WRONG;title=gameMode==='cook'?'Undercooked!':(mode==='multi'?'Not Quite!':'Wrong!');titleColor='var(--neon-pink)';}
+
+  if(isCorrect && mode!=='poll'){currentStreak++;if(currentStreak>bestStreak)bestStreak=currentStreak;}
+  else if(mode!=='poll'){currentStreak=0;}
+
   document.getElementById('result-icon').innerHTML=icon;
   document.getElementById('result-title').textContent=title;
   document.getElementById('result-title').style.color=titleColor;
-  document.getElementById('result-pts').textContent=pts > 0 ? `+${pts.toLocaleString()} pts` : 'No points';
-  const streakEl = document.getElementById('result-streak');
-if (streakEl) {
-  if (currentStreak >= 2) {
-    streakEl.style.display = 'block';
-    streakEl.textContent = `${currentStreak}× streak!`;
-  } else {
-    streakEl.style.display = 'none';
-  }
-}
-  const testContinueWrap = document.getElementById('test-continue-wrap');
-if (testContinueWrap) {
-  // check hostingMode from room
-  get(ref(db, `rooms/${roomCode}/hostingMode`)).then(snap => {
-    if (snap.val() === 'test') {
-      testContinueWrap.style.display = 'flex';
-    }
+  document.getElementById('result-pts').textContent=pts>0?`+${pts.toLocaleString()} pts`:'No points';
+
+  const streakEl=document.getElementById('result-streak');
+  if(streakEl){if(currentStreak>=2){streakEl.style.display='block';streakEl.textContent=`${currentStreak}× streak!`;}else{streakEl.style.display='none';}}
+
+  get(ref(db,`rooms/${roomCode}/hostingMode`)).then(snap=>{
+    if(snap.val()==='test'){setTimeout(async()=>{await update(ref(db,`rooms/${roomCode}/players/${playerId}`),{readyForNext:lastQuestionIndex});},1000);}
   });
-}
-  const proNotice = document.getElementById('result-pts-pro');
-  proNotice.style.display = (hasProSubscription && pts > 0 && isCorrect) ? 'block' : 'none';
+
+  const proNotice=document.getElementById('result-pts-pro');
+  proNotice.style.display=(hasProSubscription&&pts>0&&isCorrect)?'block':'none';
   get(ref(db,`rooms/${roomCode}/players/${playerId}`)).then(s=>{
     document.getElementById('result-total').textContent=(s.exists()?(s.val().score||0):myScore).toLocaleString();
   });
   showScreen('screen-result');
 }
-
 // ===== LEADERBOARD =====
 function showLeaderboard(players) {
   const sorted=Object.values(players).sort((a,b)=>b.score-a.score);
@@ -1999,6 +2028,25 @@ function showLeaderboard(players) {
     container.appendChild(el);
   });
   showScreen('screen-leaderboard');
+// Auto-continue in test mode
+  get(ref(db,`rooms/${roomCode}/hostingMode`)).then(snap=>{
+    if(snap.val()==='test'){
+      setTimeout(async()=>{
+        const nextQi = lastQuestionIndex + 1;
+        const roomSnap = await get(ref(db,`rooms/${roomCode}`));
+        const totalQs = roomSnap.val()?.quiz?.questions?.length || 0;
+        if(nextQi >= totalQs){
+          await update(ref(db,`rooms/${roomCode}`),{status:'final'});
+        } else {
+          await update(ref(db,`rooms/${roomCode}`),{
+            status:'question',
+            currentQuestion: nextQi,
+            questionStartTime: Date.now()
+          });
+        }
+      }, 2500);
+    }
+  });
 }
 
 // ===== FINAL =====
@@ -2042,7 +2090,7 @@ function showFinal(players,room) {
   showScreen('screen-final');
 }
 // ===== BUILT-IN QUIZZES =====
-const BUILTIN_QUIZZES = [
+window.BUILTIN_QUIZZES = [
   {
     title: 'General Knowledge',
     desc: '10 questions across history, science & pop culture',
@@ -2115,68 +2163,162 @@ const BUILTIN_QUIZZES = [
       { question: 'What does "GIF" stand for?', choices: ['Graphical Image Format', 'Graphics Interchange Format', 'Global Image File', 'General Image Format'], correct: 1, timeLimit: 20, qtype: 'mc', image: '' },
     ]
   },
-  {
+{
     title: '👁 ???',
     desc: 'You found it. One question. Choose wisely.',
     icon: '👁',
     color: 'var(--neon-yellow)',
     secret: true,
     questions: [
-      { question: 'You found the secret quiz. This is your one chance — answer correctly and claim your reward. What is the answer?', choices: ['The reward is real', 'There is no reward', 'I am already rewarded', 'This is a trick'], correct: 0, timeLimit: 30, qtype: 'mc', image: '', secretReward: 500 },
+      { question: 'You found the secret quiz. This is your one chance — answer correctly and claim your reward. What is the answer?', choices: ['The reward is real', 'There is no reward', 'I am already rewarded', 'This is a trick'], correct: 0, timeLimit: 30, qtype: 'mc', image: '', secretReward: 250 },
     ]
   },
 ];
 
-function renderBuiltinQuizzes() {
+function promptPlayerName() {
+  return new Promise(resolve => {
+    const banner = document.createElement('div');
+    banner.id = 'name-prompt-banner';
+    banner.style.cssText = `
+      position:fixed;top:0;left:0;right:0;z-index:900;
+      background:var(--bg-panel);border-bottom:1px solid var(--border-glow);
+      padding:16px 24px;display:flex;align-items:center;gap:12px;
+      transform:translateY(-100%);transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow:0 4px 30px rgba(0,0,0,0.3);
+    `;
+    banner.innerHTML = `
+      <div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.2em;color:var(--neon-cyan);white-space:nowrap;">YOUR CALLSIGN</div>
+      <input id="name-prompt-input" type="text" maxlength="20" placeholder="Enter name..." autocomplete="off"
+        style="flex:1;background:var(--bg-deep);border:1px solid rgba(0,245,255,0.2);border-radius:var(--radius-md);
+        color:var(--text-primary);font-family:var(--font-body);font-size:1rem;padding:10px 14px;outline:none;" />
+      <button id="name-prompt-confirm" class="btn btn-primary" style="width:auto;padding:10px 20px;font-size:0.7rem;">Go →</button>
+      <button id="name-prompt-cancel" style="background:transparent;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;padding:4px 8px;">✕</button>
+    `;
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      banner.style.transform = 'translateY(0)';
+    }));
+    const cleanup = (val) => {
+      banner.style.transform = 'translateY(-100%)';
+      setTimeout(() => banner.remove(), 400);
+      resolve(val);
+    };
+    document.getElementById('name-prompt-confirm').addEventListener('click', () => {
+      const val = document.getElementById('name-prompt-input').value.trim();
+      if (!val) { document.getElementById('name-prompt-input').style.borderColor = 'var(--neon-pink)'; return; }
+      cleanup(val);
+    });
+    document.getElementById('name-prompt-cancel').addEventListener('click', () => cleanup(null));
+    document.getElementById('name-prompt-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('name-prompt-confirm').click();
+      if (e.key === 'Escape') cleanup(null);
+    });
+    setTimeout(() => document.getElementById('name-prompt-input')?.focus(), 400);
+  });
+}
+
+window.renderBuiltinQuizzes = function() {
   const container = document.getElementById('builtin-quiz-list');
-if (!container) { console.error('builtin-quiz-list not found'); return; }
-console.log('rendering', BUILTIN_QUIZZES.length, 'quizzes');
+  if (!container) return;
   container.innerHTML = '';
-  BUILTIN_QUIZZES.forEach((quiz, i) => {
+
+  const visible = window.BUILTIN_QUIZZES.filter(q => !q.secret);
+  const secret = window.BUILTIN_QUIZZES.find(q => q.secret);
+
+  // Pick a random slot among visible cards to inject the secret card
+  const secretSlot = Math.floor(Math.random() * (visible.length + 1));
+
+  // Build final ordered list with secret inserted at random position
+  const ordered = [...visible];
+  if (secret) ordered.splice(secretSlot, 0, secret);
+
+  // Move secret card every 25 seconds
+  if (window._secretMoveInterval) clearInterval(window._secretMoveInterval);
+  if (secret) {
+    window._secretMoveInterval = setInterval(() => {
+      window.renderBuiltinQuizzes();
+    }, 25000);
+  }
+
+  ordered.forEach((quiz, i) => {
     const card = document.createElement('div');
     card.className = 'saved-quiz-card';
-    card.style.animationDelay = (i * 0.06) + 's';
+    card.style.animation = 'none';
+    card.style.opacity = '1';
+
     if (quiz.secret) {
-      card.style.borderColor = 'rgba(255,230,0,0.3)';
-      card.style.background = 'rgba(255,230,0,0.03)';
+      card.style.opacity = '0.01';
+      card.innerHTML = `
+        <div class="sqc-icon" style="font-size:1.4rem;">🧠</div>
+        <div class="sqc-info">
+          <div class="sqc-title">General Knowledge II</div>
+          <div class="sqc-meta">10 questions · More trivia across all topics</div>
+        </div>
+        <span class="sqc-arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg></span>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="sqc-icon" style="font-size:1.4rem;">${quiz.icon}</div>
+        <div class="sqc-info">
+          <div class="sqc-title">${quiz.title}</div>
+          <div class="sqc-meta">${quiz.questions.length} question${quiz.questions.length > 1 ? 's' : ''} · ${quiz.desc}</div>
+        </div>
+        <span class="sqc-arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg></span>
+      `;
     }
-    card.innerHTML = `
-      <div class="sqc-icon" style="color:${quiz.color};background:${quiz.color}15;font-size:1.4rem;">${quiz.icon}</div>
-      <div class="sqc-info">
-        <div class="sqc-title" style="color:${quiz.secret ? 'var(--neon-yellow)' : ''}">${quiz.title}</div>
-        <div class="sqc-meta">${quiz.questions.length} question${quiz.questions.length > 1 ? 's' : ''} · ${quiz.desc}</div>
-      </div>
-      <span class="sqc-arrow"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg></span>
-    `;
-    card.addEventListener('click', () => {
+
+    card.addEventListener('click', async () => {
+      let name = document.getElementById('input-name').value.trim();
+      if (!name) {
+        name = await promptPlayerName();
+        if (!name) return;
+        document.getElementById('input-name').value = name;
+      }
       if (quiz.secret) {
-        // Store secret flag so host.html can award bits on completion
         localStorage.setItem('qx_secret_quiz', '1');
         localStorage.setItem('qx_secret_reward', quiz.questions[0].secretReward);
       } else {
         localStorage.removeItem('qx_secret_quiz');
       }
-      localStorage.setItem('qx_load_quiz', JSON.stringify({ title: quiz.title, questions: quiz.questions }));
-      window.location.href = 'host.html?load=1';
+      const autoPin = String(Math.floor(100000 + Math.random() * 900000));
+      await set(ref(db, `rooms/${autoPin}`), {
+        status: 'lobby',
+        currentQuestion: 0,
+        questionStartTime: 0,
+        quiz: { title: quiz.title, questions: quiz.questions },
+        gameMode: 'normal',
+        hostingMode: 'test',
+        autoRoom: true,
+        createdAt: Date.now(),
+        host: true
+      });
+      document.getElementById('input-pin').value = autoPin;
+      buildAvatarPicker();
+      await joinGame();
+      setTimeout(async () => {
+        await update(ref(db, `rooms/${autoPin}`), {
+          status: 'question',
+          questionStartTime: Date.now()
+        });
+      }, 2000);
     });
+
     container.appendChild(card);
   });
-}
-
-// Hook into showSidebarPanel
-const _origShowPanel = window.showSidebarPanel;
-window.showSidebarPanel = function(panel) {
-  document.querySelectorAll('.sidebar-panel').forEach(p => { p.classList.remove('panel-active'); p.style.display = 'none'; });
-  const targetPanel = document.getElementById('panel-' + panel);
-  if (targetPanel) { targetPanel.classList.add('panel-active'); targetPanel.style.display = 'flex'; }
-  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-  const btns = { home: 'sb-home-btn', profile: 'sb-profile-btn', saved: 'sb-saved-btn', builtin: 'sb-builtin-btn' };
-  if (btns[panel]) { const b = document.getElementById(btns[panel]); if(b) b.classList.add('active'); }
-  if (panel === 'profile') renderProfilePanel();
-  if (panel === 'saved') renderSavedQuizzes();
-  if (panel === 'builtin') renderBuiltinQuizzes();
 };
 document.getElementById('btn-play-again').addEventListener('click',()=>window.location.reload());
+// ===== LOBBY MUSIC =====
+const lobbyAudio = new Audio('https://raw.githubusercontent.com/r2ftzu1ha2vy-glitch/Quizix/main/Untitled%20(11)-%5BAudioTrimmer.com%5D.mp3');
+lobbyAudio.loop = true;
+lobbyAudio.volume = 0.18;
+
+function startLobbyMusic() {
+  lobbyAudio.play().catch(() => {});
+}
+function stopLobbyMusic() {
+  lobbyAudio.pause();
+  lobbyAudio.currentTime = 0;
+}
 </script>
 </body>
 </html>
