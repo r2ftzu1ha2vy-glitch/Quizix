@@ -904,7 +904,9 @@ document.getElementById('btn-create-room').addEventListener('click',async()=>{
   const modeColors={normal:'var(--neon-cyan)',hack:'#00ff41',cook:'var(--neon-orange)'};
   document.getElementById('active-mode-banner').innerHTML=`<div style="font-family:var(--font-display);font-size:0.65rem;letter-spacing:0.15em;color:${modeColors[selectedGameMode]};background:${modeColors[selectedGameMode]}11;border:1px solid ${modeColors[selectedGameMode]}33;border-radius:6px;padding:8px 14px;display:inline-block;">${modeLabels[selectedGameMode]}</div>`;
   showScreen('screen-lobby-host');
+  startLobbyMusic();
   startHostRoomListener();
+  	startReactionListener();
   toast('Room created! Share the PIN.','success');
 });
 
@@ -925,15 +927,17 @@ function startHostRoomListener(){
         listEl.appendChild(el);
       });
     }
-    onValue(ref(db, `rooms/${roomCode}/reactions`), snap => {
-  if (!snap.exists()) return;
-  const reactions = snap.val();
-  Object.entries(reactions).forEach(([pid, r]) => {
-    if (r.qi !== currentQIndex) return;
-    if (document.querySelector(`[data-reaction-id="${pid}-${r.t}"]`)) return;
-    spawnReaction(r.emoji, r.name, `${pid}-${r.t}`);
+function startReactionListener() {
+  onValue(ref(db, `rooms/${roomCode}/reactions`), snap => {
+    if (!snap.exists()) return;
+    const reactions = snap.val();
+    Object.entries(reactions).forEach(([pid, r]) => {
+      if (r.qi !== currentQIndex) return;
+      if (document.querySelector(`[data-reaction-id="${pid}-${r.t}"]`)) return;
+      spawnReaction(r.emoji, r.name, `${pid}-${r.t}`);
+    });
   });
-});
+}
     if(room.status==='question'&&(document.getElementById('screen-host-question').classList.contains('active')||slideMode)){
       const qi=room.currentQuestion;
       let answered=0;
@@ -969,6 +973,7 @@ document.getElementById('btn-start-game').addEventListener('click',async()=>{
 
 // ===== LAUNCH QUESTION =====
 async function launchQuestion(qi){
+  stopLobbyMusic();
   answerRevealed=false;
   const q=quiz.questions[qi]; if(!q) return;
   document.getElementById('cook-served-badge').classList.remove('visible');
@@ -1113,7 +1118,7 @@ async function endGame(){
   const sorted=Object.values(players).sort((a,b)=>b.score-a.score);
   // Secret quiz reward
 if (localStorage.getItem('qx_secret_quiz') === '1') {
-  const reward = parseInt(localStorage.getItem('qx_secret_reward') || '500');
+  const reward = parseInt(localStorage.getItem('qx_secret_reward') || '250');
   const current = parseInt(localStorage.getItem('qx_brain_bits') || '0');
   localStorage.setItem('qx_brain_bits', current + reward);
   localStorage.removeItem('qx_secret_quiz');
@@ -1137,6 +1142,18 @@ document.getElementById('btn-end-game').addEventListener('click',endGame);
 document.getElementById('btn-end-from-lb').addEventListener('click',endGame);
 document.getElementById('btn-end-lobby').addEventListener('click',async()=>{ if(roomCode) await remove(ref(db,`rooms/${roomCode}`)); window.location.reload(); });
 document.getElementById('btn-new-game').addEventListener('click',()=>{ if(roomCode) remove(ref(db,`rooms/${roomCode}`)); window.location.reload(); });
+// ===== LOBBY MUSIC =====
+const lobbyAudio = new Audio('https://raw.githubusercontent.com/r2ftzu1ha2vy-glitch/Quizix/main/Untitled%20(11)-%5BAudioTrimmer.com%5D.mp3');
+lobbyAudio.loop = true;
+lobbyAudio.volume = 0.75;
+
+function startLobbyMusic() {
+  lobbyAudio.play().catch(() => {});
+}
+function stopLobbyMusic() {
+  lobbyAudio.pause();
+  lobbyAudio.currentTime = 0;
+}
 </script>
 </body>
 </html>
